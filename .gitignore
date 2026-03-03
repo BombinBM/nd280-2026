@@ -1,0 +1,129 @@
+# Скомпилированные файлы
+*.o
+*.o~
+*.so
+*.a
+*.d
+*.dylib
+*.lib
+*.exe
+*.out
+*.app
+
+# Исполняемые файлы
+analyzer
+nd280_analyzer
+bin/
+build/
+Debug/
+Release/
+*.exe
+
+# ROOT файлы
+*.root
+*.rootml
+*.rootpcm
+*.rootmap
+*.rootrc
+*.rootd
+*.rootdb
+*.root.log
+
+# Результаты анализа
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.eps
+*.ps
+*.svg
+*.csv
+*.txt
+*.dat
+output/
+plots/
+results/
+
+# Системные файлы
+*~
+.*.swp
+.*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+.*.un~
+
+# Файлы редакторов
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.cproject
+.settings/
+
+# Временные файлы
+tmp/
+temp/
+*.tmp
+*.temp
+*.cache
+*.log
+*.bak
+*.backup
+
+# Git
+*.orig
+*.rej
+*.patch
+
+# ROOT компилированные макросы
+*_cxx.d
+*_cxx.so
+*_cxx_ACLiC_dict_rdict.pcm
+*_cxx.dSYM/
+G__*.cxx
+G__*.h
+
+# Директории для сборки
+build*/
+bin*/
+lib*/
+obj*/
+
+# Файлы конфигурации (кроме шаблонов)
+*.conf
+*.config
+!template.conf
+!default.config
+
+# Логи
+*.log
+logs/
+
+# Данные (осторожно с этим!)
+# Раскомментируйте, если НЕ хотите хранить данные в репозитории
+# data/
+# *.root
+
+# ND280/T2K специфичные
+*.nd280
+*.t2k
+*.oa_*
+*.oa*
+*_oa_*
+*.ntuple
+*.zbs
+*.zbs.root
+
+# Результаты MCMC/фитов
+*.mcmc
+*.chain
+*.posterior
+
+# Геометрические файлы
+*.gdml
+*.geom
+*.geometry
