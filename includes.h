@@ -9,3 +9,6 @@
 #include "TChain.h"
 #include "TGraph2D.h"
 #include "TH2F.h"
+
+
+#include "inc/FileReader.h"

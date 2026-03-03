@@ -10,8 +10,18 @@ int main(int argc, char** argv)
 
     gROOT->ProcessLine(load_script_in);
 
-    std::cout << "Bye";
-    gSystem->Abort();
+    std::string filename = "data/mup/oa_pg_mup_00000001-0001_300MeV_begin.root";
+    std::string treename = "ReconDir/SFG";
 
+    FileReader reader;
+
+    if (!reader.OpenFile(filename, treename))
+    {
+        std::cerr << "Failed to open file" << std::endl;
+        return 0;
+    }
+
+    reader.PrintBranches();
+
+    std::cout << "Bye" <<std::endl;
     return 0;
-}
