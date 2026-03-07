@@ -12,3 +12,6 @@
 
 
 #include "inc/FileReader.h"
+#include "inc/AnalysisStrategy.h"
+#include "inc/StrategyManager.h"
+#include "inc/S-DrawEntries.h"

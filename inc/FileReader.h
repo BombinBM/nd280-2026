@@ -21,7 +21,7 @@ class FileReader
 public:
 
     FileReader() = default;
-    FileReader(std::string& filename, std::string& treename);
+    FileReader(const std::string& filename, const std::string& treename);
     // Запрещаем копирование для того, чтоб не пересекались индексы
     FileReader(const FileReader&) = delete;
     FileReader& operator=(const FileReader&) = delete;
@@ -30,29 +30,29 @@ public:
     FileReader(FileReader&&) = default;
     FileReader& operator=(FileReader&&) = default;
 
-    bool OpenFile(std::string& filename, std::string& treename);
+    bool OpenFile(const std::string& filename, const std::string& treename);
     void CloseFile();
     bool IsOpen(){return rootFile!= nullptr && !rootFile->IsZombie();}
 
 
     template<typename T>
-    bool SetBranchAddres(std::string& branchname, T* address);
+    bool SetBranchAddres(const std::string& branchname, T* address);
 
     template<typename T>
-    bool AddBranchReader(std::string& branchname);
-
+    bool AddBranchReader(const std::string& branchname);
+ 
     template<typename T>
-    T* GetBranchReader(std::string& branchname);
+    T* GetBranchReader(const std::string& branchname);
 
     bool GetEntry(long long entry);
     long long GetEntries();
     bool Next();
 
     template<typename T>
-    T GetValue(std::string& branchname);
+    T GetValue(const std::string& branchname);
 
     template<typename T>
-    std::vector<T> GetArray(std::string& branchname);
+    std::vector<T> GetArray(const std::string& branchname);
 
     void PrintBranches();
     TObjArray* GetBranchList();
@@ -69,7 +69,7 @@ private:
 };
 
 template<typename T>
-bool FileReader::SetBranchAddres(std::string& branchname, T* addres)
+bool FileReader::SetBranchAddres(const std::string& branchname, T* addres)
 {
     if(!treeReader || !treeReader->GetTree())
     {
@@ -86,7 +86,7 @@ bool FileReader::SetBranchAddres(std::string& branchname, T* addres)
 }
 
 template<typename T>
-bool FileReader::AddBranchReader(std::string& branchname)
+bool FileReader::AddBranchReader(const std::string& branchname)
 {
     if(!treeReader)
     {return false;}
@@ -114,7 +114,7 @@ bool FileReader::AddBranchReader(std::string& branchname)
 }
 
 template<typename T>
-T* FileReader::GetBranchReader(std::string& branchname)
+T* FileReader::GetBranchReader(const std::string& branchname)
 {
     auto it = branchReaders.find(branchname);
     if(it == branchReaders.end())
@@ -136,7 +136,7 @@ T* FileReader::GetBranchReader(std::string& branchname)
 }
 
 template<typename T>
-T FileReader::GetValue(std::string& branchname)
+T FileReader::GetValue(const std::string& branchname)
 {
     auto it = branchReaders.find(branchname);
     if (it == branchReaders.end())
@@ -158,7 +158,7 @@ T FileReader::GetValue(std::string& branchname)
 }
 
 template<typename T>
-std::vector<T> FileReader::GetArray(std:: string& branchname)
+std::vector<T> FileReader::GetArray(const std::string& branchname)
 {
     auto it = branchReaders.find(branchname);
     if (it == branchReaders.end())

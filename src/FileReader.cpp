@@ -3,12 +3,12 @@
 #include <TBranch.h>
 #include <TList.h>
 
-FileReader::FileReader(std::string& filename, std::string& treename) : treeName(treename)
+FileReader::FileReader(const std::string& filename, const std::string& treename) : treeName(treename)
 {
     OpenFile(filename, treename);
 }
 
-bool FileReader::OpenFile(std::string& filename, std::string& treename)
+bool FileReader::OpenFile(const std::string& filename, const std::string& treename)
 {
     CloseFile();
 
