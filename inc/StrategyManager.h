@@ -14,6 +14,12 @@ public:
 
     void AddStrategy(std::unique_ptr<AnalysisStrategy> strategy)
     {
+        if (!strategy)
+        {
+            std::cerr << "❌ StrategyManager: попытка добавить nullptr стратегию!" << std::endl;
+            return;
+        }
+        
         std::cout << "Добавлена стратегия " << strategy->GetName() << std::endl;
         strategies.push_back(std::move(strategy));
     }
@@ -59,6 +65,14 @@ public:
         }
     }
 
+    void ProcessRun(FileReader& reader)
+    {
+        for(auto& s : strategies)
+        {
+            s->ProcessRun(reader);
+        }
+    }
+
     void EndAll()
     {
         std::cout << "" << std::endl;
@@ -88,6 +102,14 @@ public:
         }
     }
 
+    void WriteAll(const std::string filename, const std::string option = "recreate") const
+    {
+        for (const auto& s : strategies)
+        {
+            s->Write(filename.c_str(), option.c_str());
+        }
+    }
+
     void ResetAll()
     {
         for (auto& s: strategies)
@@ -96,7 +118,7 @@ public:
         }
     }
 
-    std::vector<std::string> GetStranegyNames() const
+    std::vector<std::string> GetStrategyNames() const
     {
         std::vector<std::string> names;
         for(const auto& s: strategies)

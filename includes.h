@@ -15,3 +15,8 @@
 #include "inc/AnalysisStrategy.h"
 #include "inc/StrategyManager.h"
 #include "inc/S-DrawEntries.h"
+#include "inc/S-EventCharge.h"
+#include "inc/S-EventEnergy.h"
+#include "inc/S-DrawFibers.h"
+
+#include "test3/SFGAnalysis/ND__TSFGReconModule__TSFGHit.h"

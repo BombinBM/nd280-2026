@@ -9,22 +9,26 @@ ROOTLIBS := $(shell root-config --libs)
 
 SRCDIR := src
 INCDIR := inc
+SFGDIR := test3/SFGAnalysis
 BUILDDIR := build
 TARGET := bin/project
 
 # Исходные файлы
 
 SOURCES := $(wildcard $(SRCDIR)/*.cpp) main.cpp
-OBJECTS := $(patsubst %.cpp, $(BUILDDIR)/%.o, $(notdir $(SOURCES)))
+OBJECTS := $(patsubst %.cpp, $(BUILDDIR)/%.o, $(notdir $(filter %.cpp, $(SOURCES))))
 DEPENDS := $(OBJECTS:.o=.d)
 
 # Включаемые директории с библиотеками
 
-INCLUDES := -I$(INCDIR)
+INCLUDES := -I$(INCDIR) -I$(SFGDIR)
+
+# 
+SFG_LIBS := $(SFGDIR)/SFGAnalysis.so
 
 # Объединение всех флагов
 CXXFLAGS += $(ROOTFLAGS) $(INCLUDES)
-LDFLAGS := $(ROOTLIBS)
+LDFLAGS := $(ROOTLIBS) -L$(SFGDIR) $(SFG_LIBS)
 
 # Цели по умолчанию
 
@@ -45,14 +49,24 @@ $(TARGET): $(OBJECTS)
 # Компиляция с автоматическим отслеживанием зависимостей
 $(BUILDDIR)/%.o: %.cpp
 	@echo "Compiling $<..."
-	@$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 	@echo "Compiling $<..."
-	@$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 # Подключение зависимостей
 -include $(DEPENDS)
+
+check-lib:
+	@echo "🔍 Проверка библиотеки в $(SFGDIR):"
+	@ls -la $(SFGDIR)/*.so 2>/dev/null || echo "❌ .so файлы не найдены"
+	@echo "\n🔍 Проверка конкретно SFGAnalysis.so:"
+	@if [ -f $(SFGDIR)/SFGAnalysis.so ]; then \
+		echo "✅ Найдена: $(SFGDIR)/SFGAnalysis.so"; \
+	else \
+		echo "❌ Библиотека SFGAnalysis.so не найдена!"; \
+	fi
 
 # Очистка
 clean:
@@ -64,6 +78,7 @@ clean:
 run: all
 	@echo "Running $(TARGET)..."
 	@$(TARGET)
+	@export LD_LIBRARY_PATH=$(SFGDIR):$$LD_LIBRARY_PATH; ./$(TARGET)
 
 # Информация о конфигурации
 info:

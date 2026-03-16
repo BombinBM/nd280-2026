@@ -5,50 +5,51 @@
 #include <string>
 
 #include <TH2D.h>
+#include <TClonesArray.h>
 
 #include "AnalysisStrategy.h"
 #include "FileReader.h"
 
+#include "ND__TSFGReconModule__TSFGHit.h"
+
 class DrawEntries : public AnalysisStrategy
 {
 private:
-    TH2D* XYprojection;
-    TH2D* XZprojection;
-    TH2D* YZprojection;
-    int currEvent;
+    TH2D* XYprojection = nullptr;
+    TH2D* XZprojection = nullptr;
+    TH2D* YZprojection = nullptr;
 public:
-    DrawEntries() 
-    : AnalysisStrategy("DrawEntries")
+    DrawEntries() : AnalysisStrategy("DrawEntries")
     {
-        XYprojection = new TH2D("Hits", "HitsXY", 194, -1000, -1000, 58, -300, 300);
-        XZprojection = new TH2D("Hits", "HitsXZ", 194, -3000, -1000, 194, -1000, 1000);
-        YZprojection = new TH2D("Hits", "HitsYZ", 194, -3000, -1000, 58, -300, 300);
-    };
-    ~DrawEntries();
+        XYprojection = new TH2D("HitsXY", "HitsXY", 194, -1000, 1000, 58, -300, 300);
+        XZprojection = new TH2D("HitsXZ", "HitsXZ", 194, -3000, -1000, 194, -1000, 1000);
+        YZprojection = new TH2D("HitsYZ", "HitsYZ", 194, -3000, -1000, 58, -300, 300);
+        
+        hists2D.push_back(XZprojection);
+        hists2D.push_back(XYprojection);
+        hists2D.push_back(YZprojection);
+    }
+    ~DrawEntries() = default;
 
-    void Begin(FileReader& reader) override
-    {
-        currEvent = reader.GetValue<int>("EventID");
-    };
-
-    void ProcessEvent(FileReader& reader) override
+    void ProcessEvent(FileReader &reader) override
     {
         try
         {
-            float x = reader.GetValue<float>("X");
-            float y = reader.GetValue<float>("Y");
-            float z = reader.GetValue<float>("Z");
-            int event = reader.GetValue<int>("EventID");
+            TClonesArray *Hits = nullptr;
+            ND::TSFGReconModule::TSFGHit *hit = nullptr;
+            int Nhits;
 
-            XZprojection->Fill(z,x);
-            YZprojection->Fill(z,y);
-            XYprojection->Fill(x,y);
-            if (event != currEvent)
+            reader.SetBranchAddres("NHits", &Nhits);
+            reader.SetBranchAddres("Hits", &Hits);
+            reader.GetEntry(eventCount);
+            for (int it = 0; it < Nhits; it++)
             {
-                currEvent = event;
-                IncrementEventCount();
+                hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
+                XYprojection->Fill(hit->Position.X(), hit->Position.Y(), hit->Charge);
+                XZprojection->Fill(hit->Position.Z(), hit->Position.X(), hit->Charge);
+                YZprojection->Fill(hit->Position.Z(), hit->Position.Y(), hit->Charge);
             }
-            
+            IncrementEventCount();
         }
         catch(const std::exception& e)
         {
@@ -61,7 +62,7 @@ public:
         AnalysisStrategy::PrintStats();
         if(GetEventCount() > 0)
         {
-            std::cout << " Было введено " << GetEventCount() << "событий" << std::endl;
+            std::cout << " Было введено " << GetEventCount() << " событий" << std::endl;
         }
     }
 };

@@ -6,62 +6,95 @@
 #include <vector>
 
 #include <TH1.h>
+#include <TH2.h>
 #include <TCanvas.h>
+#include <TFile.h>
 
 #include "FileReader.h"
 
 class AnalysisStrategy
 {
-private:
-    std::string fileName;
+protected:
+    std::string stratName;
     std::vector<TH1*> hists;
+    std::vector<TH2*> hists2D;
     int eventCount;
 public:
     AnalysisStrategy(const std::string& name)
-    :fileName(name), eventCount(0) {}
+    :stratName(name), eventCount(0) 
+    {
+        std::cout << "  🔨 AnalysisStrategy конструктор: " << name << std::endl;
+    }
     virtual ~AnalysisStrategy()
     {
         for (auto* h : hists)
         {
             delete h;
         }  
+        for(auto* h2 : hists2D)
+        {
+            delete h2;
+        }
     };
 
     virtual void Begin(FileReader& reader)
     {
-        std::cout << " ▶ Начало стратегии: " << fileName << std::endl;
+        std::cout << " ▶ Начало стратегии: " << stratName << std::endl;
         eventCount = 0;
     }
 
     virtual void ProcessEvent(FileReader& reader) = 0;
 
+    virtual void ProcessRun(FileReader& reader)
+    {
+        try
+        {
+            for (int i = 0; i < reader.GetEntries(); i++)
+            {
+                ProcessEvent(reader);
+            }
+            
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+        
+    }
+
     virtual void End()
     {
-        std::cout << "  ◀ Завершена стратегия: " << fileName 
+        std::cout << "  ◀ Завершена стратегия: " << stratName 
             << " (обработано событий: " << eventCount << ")" << std::endl;
     }
 
     virtual void Draw()
     {
-        if (hists.empty())
+        if (hists.empty() && hists2D.empty())
         {
             std::cout << "  Нет гистограмм для отображения" << std::endl;
             return;
         }
 
-        TCanvas* c = new TCanvas(fileName.c_str(), fileName.c_str(), 800, 600);
-        c->Divide(2, (hists.size() + 1) /2);
+        TCanvas* c = new TCanvas(stratName.c_str(), stratName.c_str(), 800, 600);
+        c->Divide(2, (hists.size() + hists2D.size() + 1) /2);
 
         for (size_t i = 0; i < hists.size(); i++)
         {
             c->cd(i+1);
             hists[i]->Draw();
         }
+        for (size_t i = 0; i < hists2D.size(); i++)
+        {
+            c->cd(hists.size()+i+1);
+            hists2D[i]->Draw();
+        }
+        c->Draw();
     }
 
     virtual void PrintStats() const
     {
-        std::cout << "\n📊 Статистика по стратегии: " << fileName << std::endl;
+        std::cout << "\n📊 Статистика по стратегии: " << stratName << std::endl;
         // std::cout << "   " << fDescription << std::endl;
         std::cout << "   Обработано событий: " << eventCount << std::endl;
     }
@@ -72,10 +105,28 @@ public:
         {
             h->Reset();
         }
+        for (auto* h2 :hists2D)
+        {
+            h2->Reset();
+        }
         eventCount = 0;
     }
 
-    std::string GetName() const {return fileName;}
+    virtual void Write(const std::string filename, const std::string option = "recreate") const
+    {
+        TFile *file = TFile::Open(filename.c_str(), option.c_str());
+        for (auto* h : hists)
+        {
+            h->Write();
+        }
+        for (auto* h2 :hists2D)
+        {
+            h2->Write();
+        }
+        file->Close();
+    }
+
+    std::string GetName() const {return stratName;}
     int GetEventCount() const {return eventCount;}
 
     protected:

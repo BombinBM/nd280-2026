@@ -17,6 +17,8 @@ class TDataVector;
 #include <vector>
 #include "ND__TDatum.h"
 
+using std::vector, std::string;
+
 namespace ND {
 class TDataVector : public ND::TData {
 
