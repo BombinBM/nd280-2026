@@ -5,9 +5,38 @@ using std::cout, std::endl;
 
 int main(int argc, char** argv)
 {
-
     std::string filename;
+    std::string outputfilename;
+    std::string outputfileoption;
 
+    switch (argc)
+    {
+    case 1:
+        filename = "data/mup/oa_pg_mup_00000001-0001_400MeV_begin.root";
+        cout << "Использован файл по умолчанию: " << filename << endl;
+        break;
+    case 2:
+        filename = argv[1];
+        cout << "Использован файл: " << filename << endl;
+        break;
+    case 3:
+        filename = argv[1];
+        outputfilename = argv[2];
+        cout << "Использован файл: " << filename << endl;
+        cout << "Данные будут в файле: " << outputfilename << endl;
+        break;
+    case 4:
+        filename = argv[1];
+        outputfilename = argv[2];
+        outputfileoption = argv[3];
+        cout << "Использован файл: " << filename << endl;
+        cout << "Файл вывода называется: " << outputfilename << endl;
+        cout << "Опция для файла: " << outputfileoption << endl;
+        break;
+    default:
+        break;
+    }
+    
     if (argc > 1)
     {
         filename = argv[1];
@@ -43,12 +72,23 @@ int main(int argc, char** argv)
     // stratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge()));
     // stratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy()));
     stratMan.BeginAll(reader);
-    // stratMan.ProcessRun(reader);
-    stratMan.ProcessEvent(reader);
+    stratMan.ProcessRun(reader);
+    // stratMan.ProcessEvent(reader);
     stratMan.EndAll();
     stratMan.PrintAllStats();
     // stratMan.DrawAll();
-    stratMan.WriteAll("out.root");
+    if(!outputfileoption.empty() && !outputfilename.empty())
+    {
+        stratMan.WriteAll(outputfilename, outputfileoption);
+    }
+    else if(!outputfilename.empty())
+    {
+        stratMan.WriteAll(outputfilename);
+    }
+    else
+    {
+        stratMan.WriteAll();
+    }
     app->Run();
     cout << "Bye" << endl;
     return 0;

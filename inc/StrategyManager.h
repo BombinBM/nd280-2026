@@ -102,7 +102,7 @@ public:
         }
     }
 
-    void WriteAll(const std::string filename, const std::string option = "recreate") const
+    void WriteAll(const std::string filename = "output.root", const std::string option = "recreate") const
     {
         for (const auto& s : strategies)
         {

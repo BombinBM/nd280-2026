@@ -112,7 +112,7 @@ public:
         eventCount = 0;
     }
 
-    virtual void Write(const std::string filename, const std::string option = "recreate") const
+    virtual void Write(const std::string filename = "output.root", const std::string option = "recreate") const
     {
         TFile *file = TFile::Open(filename.c_str(), option.c_str());
         for (auto* h : hists)
