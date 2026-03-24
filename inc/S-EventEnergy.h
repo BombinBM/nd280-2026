@@ -28,23 +28,30 @@ public:
 
     ~EventEnergy() = default;
 
-    void ProcessEvent(FileReader &reader)
+    void ProcessEvent(FileReader &reader) override
     {
-        TClonesArray *Hits = nullptr;
-        ND::TSFGReconModule::TSFGHit *hit = nullptr;
-        int NHits;
-        double sum = 0;
-        reader.SetBranchAddres("NTrueHits", &NHits);
-        reader.SetBranchAddres("TrueHits", &Hits);
-        reader.GetEntry(eventCount);
-        for (int i = 0; i < NHits; i++)
+        try
         {
-            hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
-            trueEdep->Fill(hit->Charge);
-            sum += hit->Charge;
+            TClonesArray *Hits = nullptr;
+            ND::TSFGReconModule::TSFGHit *hit = nullptr;
+            int NHits;
+            double sum = 0;
+            reader.SetBranchAddres("NTrueHits", &NHits);
+            reader.SetBranchAddres("TrueHits", &Hits);
+            reader.GetEntry(eventCount);
+            for (int i = 0; i < NHits; i++)
+            {
+                hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
+                trueEdep->Fill(hit->Charge);
+                sum += hit->Charge;
+            }
+            trueFulledep->Fill(sum);
+            IncrementEventCount();
         }
-        trueFulledep->Fill(sum);
-        IncrementEventCount();
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
     }
 };
 

@@ -25,9 +25,9 @@ private:
 public:
     DrawFibers() : AnalysisStrategy("DrawFibers")
     {
-        XYFibprojection = new TH2D("HitsXY", "HitsXY", 194, -1000, 1000, 58, -300, 300);
-        XZFibprojection = new TH2D("HitsXZ", "HitsXZ", 194, -3000, -1000, 194, -1000, 1000);
-        YZFibprojection = new TH2D("HitsYZ", "HitsYZ", 194, -3000, -1000, 58, -300, 300);
+        XYFibprojection = new TH2D("FibHitsXY", "FibHitsXY", 194, -1000, 1000, 58, -300, 300);
+        XZFibprojection = new TH2D("FibHitsXZ", "FibHitsXZ", 194, -3000, -1000, 194, -1000, 1000);
+        YZFibprojection = new TH2D("FibHitsYZ", "FibHitsYZ", 194, -3000, -1000, 58, -300, 300);
 
         ChargeX = new TH1D("ChargeX", "ChargeX", 200, 0, 400);
         ChargeY = new TH1D("ChargeY", "ChargeY", 200, 0, 400);
@@ -48,37 +48,42 @@ public:
     {
         try
         {
-            TClonesArray *Hits = nullptr;
-            ND::TSFGReconModule::TSFGHit *hit = nullptr;
-            int Nhits;
+            TClonesArray *FibHits = nullptr;
+            ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
+            int NFibhits;
 
-            reader.SetBranchAddres("NFibers", &Nhits);
-            reader.SetBranchAddres("Fibers", &Hits);
+            reader.SetBranchAddres("NFibers", &NFibhits);
+            reader.SetBranchAddres("Fibers", &FibHits);
             reader.GetEntry(eventCount);
-            for (int it = 0; it < Nhits; it++)
+            for (int it = 0; it < NFibhits; it++)
             {
-                hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
-                if(hit->Position.X() < -980)
-                {
-                    YZFibprojection->Fill(hit->Position.Z(), hit->Position.Y(), hit->Charge);
-                    ChargeX->Fill(hit->Charge);
-                    continue;
-                }
-                else if (hit->Position.Z() < -2855)
-                {
-                    XYFibprojection->Fill(hit->Position.X(), hit->Position.Y(), hit->Charge);
-                    ChargeZ->Fill(hit->Charge);
-                    continue;
-                }
-                else
-                {
-                    XZFibprojection->Fill(hit->Position.Z(), hit->Position.X(), hit->Charge);
-                    ChargeY->Fill(hit->Charge);
-                    continue;
-                }
+                Fibhit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(FibHits->At(it));
+                if (Fibhit->Charge > 10)
+                {    
+                    if(Fibhit->Position.X() < -980)
+                    {
+                        YZFibprojection->Fill(Fibhit->Position.Z(), Fibhit->Position.Y(), Fibhit->Charge);
+                        ChargeX->Fill(Fibhit->Charge);
+                        continue;
+                    }
+                    else if (Fibhit->Position.Z() < -2855)
+                    {
+                        XYFibprojection->Fill(Fibhit->Position.X(), Fibhit->Position.Y(), Fibhit->Charge);
+                        ChargeZ->Fill(Fibhit->Charge);
+                        continue;
+                    }
+                    else
+                    {
+                        XZFibprojection->Fill(Fibhit->Position.Z(), Fibhit->Position.X(), Fibhit->Charge);
+                        ChargeY->Fill(Fibhit->Charge);
+                        continue;
+                    }
+                
                 std::cout << "Bad coordinates for fiber with: "; 
-                hit->Position.Print();
+                
+                Fibhit->Position.Print();
                 std::cout << std::endl;
+                }
             }
             IncrementEventCount();
         }

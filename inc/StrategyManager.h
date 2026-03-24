@@ -82,6 +82,16 @@ public:
         }
     }
 
+    void ProcessStrategies(FileReader& reader)
+    {
+        for(auto& s : strategies)
+        {
+            s->Begin(reader);
+            s->ProcessRun(reader);
+            s->End();
+        }
+    }
+
     void PrintAllStats() const 
     {
         std::cout << "\n" << std::string(60, '=') << std::endl;
@@ -102,12 +112,13 @@ public:
         }
     }
 
-    void WriteAll(const std::string filename = "output.root", const std::string option = "recreate") const
+    void WriteAll(const std::string filename = "output.root", const std::string option = "update") const
     {
         for (const auto& s : strategies)
         {
             s->Write(filename.c_str(), option.c_str());
         }
+        std::cout << "  Произошла запись в файл с названием: " << filename << std::endl;
     }
 
     void ResetAll()

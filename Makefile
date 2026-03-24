@@ -23,7 +23,7 @@ DEPENDS := $(OBJECTS:.o=.d)
 
 INCLUDES := -I$(INCDIR) -I$(SFGDIR)
 
-# 
+# Папка 
 SFG_LIBS := $(SFGDIR)/SFGAnalysis.so
 
 # Объединение всех флагов

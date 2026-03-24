@@ -20,7 +20,7 @@ private:
 public:
     EventCharge() : AnalysisStrategy("EventCharge")
     {
-        std::cout << "EventCharge constructor started!" << std::endl;
+        // std::cout << "EventCharge constructor started!" << std::endl;
         edep = new TH1D("Edep", "Edep, PE", 300, 0, 300);
         fulledep = new TH1D("FullEdep", "Full Edep, PE", 100, 0, 100000);
 

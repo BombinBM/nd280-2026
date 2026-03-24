@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include <TH1.h>
 #include <TH2.h>
@@ -15,6 +16,8 @@
 class AnalysisStrategy
 {
 protected:
+    std::chrono::_V2::system_clock::time_point start, end;
+    std::chrono::duration<double, std::milli> diff;
     std::string stratName;
     std::vector<TH1*> hists;
     std::vector<TH2*> hists2D;
@@ -41,6 +44,7 @@ public:
     {
         std::cout << " ▶ Начало стратегии: " << stratName << std::endl;
         eventCount = 0;
+        start = std::chrono::high_resolution_clock::now();
     }
 
     virtual void ProcessEvent(FileReader& reader) = 0;
@@ -64,8 +68,12 @@ public:
 
     virtual void End()
     {
+        end = std::chrono::high_resolution_clock::now();
+        diff = end - start;
         std::cout << "  ◀ Завершена стратегия: " << stratName 
-            << " (обработано событий: " << eventCount << ")" << std::endl;
+            << " (обработано событий: " << eventCount << ")" << std::endl
+            << "   ◀ Затраченное время: " << diff.count() << " мс" << std::endl;
+        
     }
 
     virtual void Draw()
@@ -97,6 +105,8 @@ public:
         std::cout << "\n📊 Статистика по стратегии: " << stratName << std::endl;
         // std::cout << "   " << fDescription << std::endl;
         std::cout << "   Обработано событий: " << eventCount << std::endl;
+        std::cout << "   ◀ Затраченное время: " << diff.count() << " мс" << std::endl;
+
     }
 
     virtual void Reset()
@@ -112,7 +122,7 @@ public:
         eventCount = 0;
     }
 
-    virtual void Write(const std::string filename = "output.root", const std::string option = "recreate") const
+    virtual void Write(const std::string filename = "output.root", const std::string option = "update") const
     {
         TFile *file = TFile::Open(filename.c_str(), option.c_str());
         for (auto* h : hists)
