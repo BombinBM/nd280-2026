@@ -37,13 +37,14 @@ public:
         return false;
     }
 
-    AnalysisStrategy* GetStrategy(const std::string& name)
+    template<typename Strategy>
+    Strategy* GetStrategy(const std::string& name)
     {
         auto it = std::find_if(strategies.begin(), strategies.end(), [&name](const auto& s){return s->GetName() == name;});
 
         if (it != strategies.end())
         {
-            return it->get();
+            return dynamic_cast<Strategy*>(it->get());
         }
         return nullptr;
     }

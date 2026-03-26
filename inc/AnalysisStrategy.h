@@ -139,6 +139,9 @@ public:
     std::string GetName() const {return stratName;}
     int GetEventCount() const {return eventCount;}
 
+    virtual void SetCuts(double x, double y, double z, double e) = 0;
+    virtual void PrintCuts() = 0;
+
     protected:
     template<typename T>
     T* CreateHist(T* hist)

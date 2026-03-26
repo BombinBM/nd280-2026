@@ -22,9 +22,15 @@ private:
     TH1D* ChargeZ = nullptr;
     TH1D* ChargeY = nullptr;
     TH1D* ChargeX = nullptr;
+
+    double XCut, YCut, ZCut, ECut;
 public:
     DrawFibers() : AnalysisStrategy("DrawFibers")
     {
+        XCut = 1000;
+        YCut = 600;
+        ZCut = 0;
+        ECut = 10;
         XYFibprojection = new TH2D("FibHitsXY", "FibHitsXY", 194, -1000, 1000, 58, -300, 300);
         XZFibprojection = new TH2D("FibHitsXZ", "FibHitsXZ", 194, -3000, -1000, 194, -1000, 1000);
         YZFibprojection = new TH2D("FibHitsYZ", "FibHitsYZ", 194, -3000, -1000, 58, -300, 300);
@@ -58,9 +64,9 @@ public:
             for (int it = 0; it < NFibhits; it++)
             {
                 Fibhit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(FibHits->At(it));
-                if (Fibhit->Charge > 10)
+                if (Fibhit->Charge > ECut && Fibhit->Position.Z() < ZCut && Fibhit->Position.Y() < YCut && Fibhit->Position.X() < XCut)
                 {    
-                    if(Fibhit->Position.X() < -980)
+                    if(Fibhit->Position.X() < -980 && Fibhit->Position.Z() > -2855)
                     {
                         YZFibprojection->Fill(Fibhit->Position.Z(), Fibhit->Position.Y(), Fibhit->Charge);
                         ChargeX->Fill(Fibhit->Charge);
@@ -91,7 +97,23 @@ public:
         {
             std::cerr << e.what() << '\n';
         }
-        
+    }
+
+    void SetCuts(double x, double y, double z, double e) override
+    {
+        XCut = x;
+        YCut = y;
+        ZCut = z;
+        ECut = e;
+    }
+
+    void PrintCuts() override
+    {
+        std::cout << " ▶ Установленные каты по координатам и энергии" << '\n';
+        std::cout << "   XCut = " << XCut << '\n';
+        std::cout << "   YCut = " << YCut << '\n';
+        std::cout << "   ZCut = " << ZCut << '\n';
+        std::cout << "   Energy Cut = " << ECut << '\n';
     }
 };
 

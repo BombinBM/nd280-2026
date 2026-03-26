@@ -64,21 +64,26 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    hits_reader.PrintBranches();
+    // hits_reader.PrintBranches();
     std::vector<std::string> strats; 
 
     StrategyManager hitsStratMan, trueStratMan, fiberStratMan;
 
-    hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
-    hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
+    // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
+    // hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
 
-    hitsStratMan.ProcessStrategies(hits_reader);
+    // hitsStratMan.ProcessStrategies(hits_reader);
 
-    trueStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
+    // trueStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
 
-    trueStratMan.ProcessStrategies(true_reader);
+    // trueStratMan.ProcessStrategies(true_reader);
 
     fiberStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
+
+    strats = fiberStratMan.GetStrategyNames();
+
+    fiberStratMan.GetStrategy<DrawFibers>(strats[0])->SetCuts(1000,600,-1855, 10);
+    fiberStratMan.GetStrategy<DrawFibers>(strats[0])->PrintCuts();
 
     fiberStratMan.ProcessStrategies(fiber_reader);
 
@@ -94,26 +99,26 @@ int main(int argc, char** argv)
     // stratMan.PrintAllStats();
     // stratMan.DrawAll();
 
-    hitsStratMan.PrintAllStats();
-    trueStratMan.PrintAllStats();
+    // hitsStratMan.PrintAllStats();
+    // trueStratMan.PrintAllStats();
     fiberStratMan.PrintAllStats();
 
     if(!outputfileoption.empty() && !outputfilename.empty())
     {
-        hitsStratMan.WriteAll(outputfilename, outputfileoption);
-        trueStratMan.WriteAll(outputfilename, outputfileoption);
+        // hitsStratMan.WriteAll(outputfilename, outputfileoption);
+        // trueStratMan.WriteAll(outputfilename, outputfileoption);
         fiberStratMan.WriteAll(outputfilename, outputfileoption);
     }
     else if(!outputfilename.empty())
     {
-        hitsStratMan.WriteAll(outputfilename);
-        trueStratMan.WriteAll(outputfilename);
+        // hitsStratMan.WriteAll(outputfilename);
+        // trueStratMan.WriteAll(outputfilename);
         fiberStratMan.WriteAll(outputfilename);
     }
     else
     {
-        hitsStratMan.WriteAll();
-        trueStratMan.WriteAll();
+        // hitsStratMan.WriteAll();
+        // trueStratMan.WriteAll();
         fiberStratMan.WriteAll();
     }
     auto end = std::chrono::high_resolution_clock::now();
