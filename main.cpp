@@ -13,18 +13,18 @@ int main(int argc, char** argv)
     switch (argc)
     {
     case 1:
-        filename = "data/mup/oa_pg_mup_00000001-0001_400MeV_begin.root";
-        cout << "Использован файл по умолчанию: " << filename << endl;
+        filename = "data/37/mup/oa_pg_mup_00000001-0001_400MeV_begin.root";
+        cout << "Использован файл по умолчанию: " << filename << endl << endl;
         break;
     case 2:
         filename = argv[1];
-        cout << "Использован файл: " << filename << endl;
+        cout << "Использован файл: " << filename << endl << endl;
         break;
     case 3:
         filename = argv[1];
         outputfilename = argv[2];
         cout << "Использован файл: " << filename << endl;
-        cout << "Данные будут в файле: " << outputfilename << endl;
+        cout << "Данные будут в файле: " << outputfilename << endl << endl;
         break;
     case 4:
         filename = argv[1];
@@ -32,27 +32,15 @@ int main(int argc, char** argv)
         outputfileoption = argv[3];
         cout << "Использован файл: " << filename << endl;
         cout << "Файл вывода называется: " << outputfilename << endl;
-        cout << "Опция для файла: " << outputfileoption << endl;
+        cout << "Опция для файла: " << outputfileoption << endl << endl;
         break;
     default:
         break;
     }
-    
-    if (argc > 1)
-    {
-        filename = argv[1];
-        cout << "Использован файл: " << filename << endl;}
-    else
-    {
-        filename = "data/37/mup/oa_pg_mup_00000001-0001_400MeV_begin.root";
-        cout << "Использован файл по умолчанию: " << filename << endl;
-    }
-    
+
     TApplication *app = new TApplication("App", &argc, argv);
 
-    const char* load_script_in = ".x /home/bogdan/Desktop/VScode/nd280-2026/test3/load_classes.C";
-
-    gROOT->ProcessLine(load_script_in);
+    gROOT->ProcessLine(".L /home/bogdan/Desktop/VScode/nd280-2026/test3/SFGAnalysis/SFGAnalysis.so");
 
     std::string treename = "ReconDir/SFG";
 
@@ -86,6 +74,8 @@ int main(int argc, char** argv)
     fiberStratMan.GetStrategy<DrawFibers>(strats[0])->PrintCuts();
 
     fiberStratMan.ProcessStrategies(fiber_reader);
+
+    // fiberStratMan.ProcessEvent(fiber_reader);
 
     // stratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers()));
     // stratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy()));

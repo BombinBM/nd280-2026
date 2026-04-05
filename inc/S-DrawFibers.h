@@ -3,8 +3,10 @@
 
 #include <iostream>
 #include <string>
+#include <map>
 
 #include <TH2D.h>
+#include <TF1.h>
 #include <TClonesArray.h>
 
 #include "AnalysisStrategy.h"
@@ -37,7 +39,7 @@ public:
 
         ChargeX = new TH1D("ChargeX", "ChargeX", 200, 0, 400);
         ChargeY = new TH1D("ChargeY", "ChargeY", 200, 0, 400);
-        ChargeZ = new TH1D("ChargeZ", "ChargeZ", 200, 0, 400);
+        // ChargeZ = new TH1D("ChargeZ", "ChargeZ", 200, 0, 400);
 
         
         hists2D.push_back(XYFibprojection);
@@ -46,7 +48,7 @@ public:
 
         hists.push_back(ChargeX);
         hists.push_back(ChargeY);
-        hists.push_back(ChargeZ);
+        // hists.push_back(ChargeZ);
     }
     ~DrawFibers() = default;
 
@@ -58,30 +60,64 @@ public:
             ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
             int NFibhits;
 
+            std::vector<double> LayerCharges;
+
+            double x,y,z,charge;
+
+            std::map<double, double> ZYmap, ZXmap, Zmap;
+
             reader.SetBranchAddres("NFibers", &NFibhits);
             reader.SetBranchAddres("Fibers", &FibHits);
             reader.GetEntry(eventCount);
+
+            Fibhit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(FibHits->At(0));
+            x = Fibhit->Position.X();
+            y = Fibhit->Position.Y();
+            z = Fibhit->Position.Z();
+
             for (int it = 0; it < NFibhits; it++)
             {
                 Fibhit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(FibHits->At(it));
-                if (Fibhit->Charge > ECut && Fibhit->Position.Z() < ZCut && Fibhit->Position.Y() < YCut && Fibhit->Position.X() < XCut)
+
+                x = Fibhit->Position.X();
+                y = Fibhit->Position.Y();
+                z = Fibhit->Position.Z();
+                charge = Fibhit->Charge;                
+                
+                if (charge > ECut && z < ZCut && y < YCut && x < XCut)
                 {    
-                    if(Fibhit->Position.X() < -980 && Fibhit->Position.Z() > -2855)
+                    if (y < -282)
                     {
-                        YZFibprojection->Fill(Fibhit->Position.Z(), Fibhit->Position.Y(), Fibhit->Charge);
-                        ChargeX->Fill(Fibhit->Charge);
+                        if (ZYmap[z] < charge)
+                        {
+                            ZYmap[z] = charge;
+                        }
+                    }
+                    else if (x < -980)
+                    {
+                        if (ZXmap[z] < charge)
+                        {
+                            ZXmap[z] = charge;
+                        }
+                        
+                    }
+                    
+                    if(x < -980 && z > -2855)
+                    {
+                        YZFibprojection->Fill(z, y, charge);                        
+                        // ChargeX->Fill(charge);
                         continue;
                     }
-                    else if (Fibhit->Position.Z() < -2855)
+                    else if (z < -2855)
                     {
-                        XYFibprojection->Fill(Fibhit->Position.X(), Fibhit->Position.Y(), Fibhit->Charge);
-                        ChargeZ->Fill(Fibhit->Charge);
+                        XYFibprojection->Fill(x, y, charge);
+                        // ChargeZ->Fill(charge);
                         continue;
                     }
                     else
                     {
-                        XZFibprojection->Fill(Fibhit->Position.Z(), Fibhit->Position.X(), Fibhit->Charge);
-                        ChargeY->Fill(Fibhit->Charge);
+                        XZFibprojection->Fill(z, x, charge);
+                        // ChargeY->Fill(charge);
                         continue;
                     }
                 
@@ -91,6 +127,21 @@ public:
                 std::cout << std::endl;
                 }
             }
+
+            for(const auto& pair : ZXmap)
+            {
+                // std::cout << "Max charge in Z = " << pair.first << " by X is " << pair.second << std::endl;
+                ChargeX->Fill(pair.second);
+            }
+            for(const auto& pair : ZYmap)
+            {
+                // std::cout << "Max charge in Z = " << pair.first << " by Y is " << pair.second << std::endl;
+                ChargeY->Fill(pair.second);
+            }
+            // for(const auto& pair : Zmap)
+            // {
+            //     ChargeZ->Fill(pair.second);
+            // }
             IncrementEventCount();
         }
         catch(const std::exception& e)
@@ -114,6 +165,23 @@ public:
         std::cout << "   YCut = " << YCut << '\n';
         std::cout << "   ZCut = " << ZCut << '\n';
         std::cout << "   Energy Cut = " << ECut << '\n';
+    }
+
+    void FitHists() const
+    {
+        for (const auto& hist : hists)
+        {
+            TF1 *fit_fun = new TF1("fit_fun", "gaus", ECut, hist->GetXaxis()->GetXmax());
+            hist->Fit(fit_fun, "Q", "", ECut, hist->GetXaxis()->GetXmax());
+            std::cout << "  Mean = " << fit_fun->GetParameter(1)  << "+-" << fit_fun->GetParError(1) << std::endl;
+            std::cout << "  Sigma = " << fit_fun->GetParameter(2) << "+-" << fit_fun->GetParError(2) << std::endl;
+        }
+    }
+
+    void PrintStats() const override
+    {
+        AnalysisStrategy::PrintStats();
+        FitHists();
     }
 };
 
