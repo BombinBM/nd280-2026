@@ -39,7 +39,7 @@ public:
 
         ChargeX = new TH1D("ChargeX", "ChargeX", 200, 0, 400);
         ChargeY = new TH1D("ChargeY", "ChargeY", 200, 0, 400);
-        // ChargeZ = new TH1D("ChargeZ", "ChargeZ", 200, 0, 400);
+        ChargeZ = new TH1D("ChargeZ", "ChargeZ", 200, 0, 400);
 
         
         hists2D.push_back(XYFibprojection);
@@ -48,23 +48,28 @@ public:
 
         hists.push_back(ChargeX);
         hists.push_back(ChargeY);
-        // hists.push_back(ChargeZ);
+        hists.push_back(ChargeZ);
     }
     ~DrawFibers() = default;
-
+    // Запускает ридер одного эвента, а потом заполняет гистограммы положений файбера. Используется для анализа максимального
+    // заряда в файбере, но не для полного энерговыделения, так как не учитывается crosstalk, метод валиден для треков, 
+    // направленных почти коллинеарно одной из осей детектора
     void ProcessEvent(FileReader &reader) override
     {
         try
         {
+            // 0 - not X or Y or Z, 1 - Z, 2 - Y, 3 - X
+            int track_direction = TrackDirection(reader);
+
+            // std::cout << track_direction << '\t';
+
             TClonesArray *FibHits = nullptr;
             ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
             int NFibhits;
 
-            std::vector<double> LayerCharges;
-
             double x,y,z,charge;
 
-            std::map<double, double> ZYmap, ZXmap, Zmap;
+            std::map<double, double> ZYmap, ZXmap, YZmap, YXmap, XYmap, XZmap;
 
             reader.SetBranchAddres("NFibers", &NFibhits);
             reader.SetBranchAddres("Fibers", &FibHits);
@@ -86,20 +91,56 @@ public:
                 
                 if (charge > ECut && z < ZCut && y < YCut && x < XCut)
                 {    
-                    if (y < -282)
+                    if (track_direction == 1)
                     {
-                        if (ZYmap[z] < charge)
+                        if (y < -282)
                         {
-                            ZYmap[z] = charge;
+                            if (ZYmap[z] < charge)
+                            {
+                                ZYmap[z] = charge;
+                            }
+                        }
+                        else if (x < -980)
+                        {
+                            if (ZXmap[z] < charge)
+                            {
+                                ZXmap[z] = charge;
+                            }
                         }
                     }
-                    else if (x < -980)
+                    if (track_direction == 2)
                     {
-                        if (ZXmap[z] < charge)
+                        if (z < -2855)
                         {
-                            ZXmap[z] = charge;
+                            if (YZmap[y] < charge)
+                            {
+                                YZmap[y] = charge;
+                            }
                         }
-                        
+                        else if (x < -980)
+                        {
+                            if (YXmap[y] < charge)
+                            {
+                                YXmap[y] = charge;
+                            }
+                        }
+                    }
+                    if (track_direction == 2)
+                    {
+                        if (y < -282)
+                        {
+                            if (XYmap[x] < charge)
+                            {
+                                XYmap[x] = charge;
+                            }
+                        }
+                        else if (z < -2855)
+                        {
+                            if (XZmap[x] < charge)
+                            {
+                                XZmap[x] = charge;
+                            }
+                        }
                     }
                     
                     if(x < -980 && z > -2855)
@@ -130,24 +171,116 @@ public:
 
             for(const auto& pair : ZXmap)
             {
-                // std::cout << "Max charge in Z = " << pair.first << " by X is " << pair.second << std::endl;
                 ChargeX->Fill(pair.second);
             }
             for(const auto& pair : ZYmap)
             {
-                // std::cout << "Max charge in Z = " << pair.first << " by Y is " << pair.second << std::endl;
                 ChargeY->Fill(pair.second);
             }
-            // for(const auto& pair : Zmap)
-            // {
-            //     ChargeZ->Fill(pair.second);
-            // }
+
+            for(const auto& pair : YXmap)
+            {
+                ChargeX->Fill(pair.second);
+            }
+            for(const auto& pair : YZmap)
+            {
+                ChargeZ->Fill(pair.second);
+            }
+            for(const auto& pair : XYmap)
+            {
+                ChargeY->Fill(pair.second);
+            }
+            for(const auto& pair : XZmap)
+            {
+                ChargeZ->Fill(pair.second);
+            }
+
             IncrementEventCount();
         }
         catch(const std::exception& e)
         {
             std::cerr << e.what() << '\n';
         }
+    }
+
+    int TrackDirection(FileReader &reader)
+    {
+        TClonesArray *FibHits = nullptr;
+        ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
+        int NFibhits;
+
+        reader.SetBranchAddres("NFibers", &NFibhits);
+        reader.SetBranchAddres("Fibers", &FibHits);
+        reader.GetEntry(eventCount);
+
+        double x,y,z;
+        double x_max = -1e6, y_max = -1e6, z_max = -1e6;
+        double x_min = 1e6, y_min = 1e6, z_min = 1e6;
+        for (int it = 0; it < NFibhits; it++)
+        {
+            Fibhit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(FibHits->At(it));
+            x = Fibhit->Position.X();
+            y = Fibhit->Position.Y();
+            z = Fibhit->Position.Z();
+            if (Fibhit->Charge > ECut && z < ZCut && y < YCut && x < XCut)
+            {
+                if(x > -980)
+                {
+                    if (x > x_max)
+                    {
+                        x_max = x;
+                    }
+                    if (x < x_min)
+                    {
+                        x_min = x;
+                    }
+                }
+                if (z > -2855)
+                {
+                    if (z > z_max)
+                    {
+                        z_max = z;
+                    }
+                    if (z < z_min)
+                    {
+                        z_min = z;
+                    }
+                }
+                if (y > -282)
+                {
+                    if (y > y_max)
+                    {
+                        y_max = y;
+                    }
+                    if (y < y_min)
+                    {
+                        y_min = y;
+                    }   
+                }
+            }
+        }
+
+        if (abs(z_max-z_min) < 100 && abs(y_max-y_min) < 100 && abs(x_max-x_min) < 100)
+        {
+            std::cout << "Too short track" << std::endl;
+            return 0;
+        }
+        if (abs(z_max-z_min) >= 100 && abs(y_max-y_min) < 100 && abs(x_max-x_min) < 100)
+        {
+            return 1;
+        }
+        if (abs(z_max-z_min) < 100 && abs(y_max-y_min) >= 100 && abs(x_max-x_min) < 100)
+        {
+            return 2;
+        }
+        if (abs(z_max-z_min) < 100 && abs(y_max-y_min) < 100 && abs(x_max-x_min) >= 100)
+        {
+            return 3;
+        }
+
+        // std::cout << "Track direction is undefined:" << (z_max-z_min) << '\t' << (y_max-y_min) << '\t' << (x_max-x_min) << std::endl;
+        std::cout << "Track direction is not X,Y,Z" << std::endl;
+        return 0;
     }
 
     void SetCuts(double x, double y, double z, double e) override
