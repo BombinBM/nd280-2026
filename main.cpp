@@ -13,7 +13,8 @@ int main(int argc, char** argv)
     switch (argc)
     {
     case 1:
-        filename = "data/37/mup/oa_pg_mup_00000001-0001_400MeV_begin.root";
+        // filename = "data/37/mup/oa_pg_mup_00000001-0001_300MeV_begin.root";
+        filename = "data/37/mup/beam/oa_pg_mup_00000001-0001_400MeV_sfg_center.root";
         cout << "Использован файл по умолчанию: " << filename << endl << endl;
         break;
     case 2:
@@ -66,16 +67,28 @@ int main(int argc, char** argv)
 
     // trueStratMan.ProcessStrategies(true_reader);
 
-    fiberStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
+    // fiberStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
+    hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
+    // hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
 
-    strats = fiberStratMan.GetStrategyNames();
+    // strats = fiberStratMan.GetStrategyNames();
 
-    fiberStratMan.GetStrategy<DrawFibers>(strats[0])->SetCuts(1000,600,-1855, 10);
-    fiberStratMan.GetStrategy<DrawFibers>(strats[0])->PrintCuts();
+    // fiberStratMan.GetStrategy<DrawFibers>(strats[0])->SetCuts(1000,600,-1855, 10);
+    // fiberStratMan.GetStrategy<DrawFibers>(strats[0])->PrintCuts();
 
-    fiberStratMan.ProcessStrategies(fiber_reader);
+    // fiberStratMan.ProcessStrategies(fiber_reader);
 
     // fiberStratMan.ProcessEvent(fiber_reader);
+
+    // strats = hitsStratMan.GetStrategyNames();
+
+    hitsStratMan.ProcessStrategies(hits_reader);
+
+    // for (int i = 0; i < 1; i++)
+    // {
+    //     hitsStratMan.ProcessEvent(hits_reader);
+    // }
+    
 
     // stratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers()));
     // stratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy()));
@@ -89,27 +102,27 @@ int main(int argc, char** argv)
     // stratMan.PrintAllStats();
     // stratMan.DrawAll();
 
-    // hitsStratMan.PrintAllStats();
+    hitsStratMan.PrintAllStats();
     // trueStratMan.PrintAllStats();
-    fiberStratMan.PrintAllStats();
+    // fiberStratMan.PrintAllStats();
 
     if(!outputfileoption.empty() && !outputfilename.empty())
     {
-        // hitsStratMan.WriteAll(outputfilename, outputfileoption);
+        hitsStratMan.WriteAll(outputfilename, outputfileoption);
         // trueStratMan.WriteAll(outputfilename, outputfileoption);
-        fiberStratMan.WriteAll(outputfilename, outputfileoption);
+        // fiberStratMan.WriteAll(outputfilename, outputfileoption);
     }
     else if(!outputfilename.empty())
     {
-        // hitsStratMan.WriteAll(outputfilename);
+        hitsStratMan.WriteAll(outputfilename);
         // trueStratMan.WriteAll(outputfilename);
-        fiberStratMan.WriteAll(outputfilename);
+        // fiberStratMan.WriteAll(outputfilename);
     }
     else
     {
-        // hitsStratMan.WriteAll();
+        hitsStratMan.WriteAll();
         // trueStratMan.WriteAll();
-        fiberStratMan.WriteAll();
+        // fiberStratMan.WriteAll();
     }
     auto end = std::chrono::high_resolution_clock::now();
 

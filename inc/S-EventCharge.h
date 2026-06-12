@@ -26,6 +26,7 @@ public:
 
         hists.push_back(edep);
         hists.push_back(fulledep);
+        hists.push_back(new TH1D("TimeHist", "Time of Hits", 200, 0, 2000));
     }
     ~EventCharge() = default;
 
@@ -36,15 +37,33 @@ public:
             TClonesArray *Hits = nullptr;
             ND::TSFGReconModule::TSFGHit *hit = nullptr;
             int Nhits;
-            double sum = 0;
+            double dl, dt, sum = 0;
+            float min_time = 1e6, max_time = 0;
             reader.SetBranchAddres("NHits", &Nhits);
             reader.SetBranchAddres("Hits", &Hits);
             reader.GetEntry(eventCount);
+            TVector3 pos = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(0))->Position;
+            float t0 = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(0))->Time;
+            for (int i = 0; i < Nhits; i++)
+            {
+                hit=dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
+                dt = hit->Time - t0;
+                dl = (hit->Position - pos).Mag();
+                if (dl < 30)
+                {
+                    min_time = std::min(min_time,hit->Time);
+                    max_time = std::max(max_time,hit->Time);    
+                }
+                t0 = hit->Time;
+                pos = hit->Position; 
+            }
+
             for (int it = 0; it < Nhits; it++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
                 edep->Fill(hit->Charge);
                 sum+= hit->Charge;
+                hists[2]->Fill(hit->Time - min_time);
             }
             fulledep->Fill(sum);
             IncrementEventCount();

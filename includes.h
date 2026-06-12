@@ -19,5 +19,7 @@
 #include "inc/S-EventCharge.h"
 #include "inc/S-EventEnergy.h"
 #include "inc/S-DrawFibers.h"
+#include "inc/S-CubesEdep.h"
+#include "inc/S-EventHeatmap.h"
 
 #include "test3/SFGAnalysis/ND__TSFGReconModule__TSFGHit.h"

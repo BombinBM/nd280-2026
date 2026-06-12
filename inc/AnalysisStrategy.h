@@ -8,6 +8,7 @@
 
 #include <TH1.h>
 #include <TH2.h>
+#include <TH3.h>
 #include <TCanvas.h>
 #include <TFile.h>
 
@@ -21,6 +22,7 @@ protected:
     std::string stratName;
     std::vector<TH1*> hists;
     std::vector<TH2*> hists2D;
+    std::vector<TH3*> hists3D;
     int eventCount;
 public:
     AnalysisStrategy(const std::string& name)
@@ -133,14 +135,18 @@ public:
         {
             h2->Write();
         }
+        for (auto* h3 :hists3D)
+        {
+            h3->Write();
+        }
         file->Close();
     }
 
     std::string GetName() const {return stratName;}
     int GetEventCount() const {return eventCount;}
 
-    virtual void SetCuts(double x, double y, double z, double e) = 0;
-    virtual void PrintCuts() = 0;
+    virtual void SetCuts(double x, double y, double z, double e) {};
+    virtual void PrintCuts() {};
 
     protected:
     template<typename T>
