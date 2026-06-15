@@ -58,18 +58,9 @@ int main(int argc, char** argv)
 
     StrategyManager hitsStratMan, trueStratMan, fiberStratMan;
 
-    // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
-    // hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
-
-    // hitsStratMan.ProcessStrategies(hits_reader);
-
     // trueStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
 
     // trueStratMan.ProcessStrategies(true_reader);
-
-    // fiberStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
-    hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
-    // hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
 
     // strats = fiberStratMan.GetStrategyNames();
 
@@ -80,14 +71,20 @@ int main(int argc, char** argv)
 
     // fiberStratMan.ProcessEvent(fiber_reader);
 
+    // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
+    hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
+    // fiberStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
+    hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
+    // hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
+
     // strats = hitsStratMan.GetStrategyNames();
 
-    hitsStratMan.ProcessStrategies(hits_reader);
+    // hitsStratMan.ProcessStrategies(hits_reader);
 
-    // for (int i = 0; i < 1; i++)
-    // {
-    //     hitsStratMan.ProcessEvent(hits_reader);
-    // }
+    for (int i = 0; i < 1; i++)
+    {
+        hitsStratMan.ProcessEvent(hits_reader);
+    }
     
 
     // stratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers()));

@@ -11,6 +11,8 @@
 #include "AnalysisStrategy.h"
 #include "FileReader.h"
 
+#include "config.h"
+
 #include "ND__TSFGReconModule__TSFGHit.h"
 
 class CubesEdep : public AnalysisStrategy
@@ -36,8 +38,8 @@ public:
             tmp = name + i;
             hists.push_back(new TH1D(tmp.c_str(), title.c_str(), 150, 0, 1500));
         }
-
-        Nhists = hists.size();
+        hists.push_back(new TH1D("TrackLength", "Track Length", 250, 0, 2500));
+        Nhists = hists.size() - 1;
     } 
 
     void ProcessEvent(FileReader &reader) override
@@ -47,6 +49,7 @@ public:
             int Nhits, Exact_Dist_Cubes = 0, Cube_Number = 0;
         
             float charge = 0, dist = 0, min_time = 1e6, max_charge = 0, min_dist = 1e6;
+            double tracklength = 0;
 
             reader.SetBranchAddres("NHits", &Nhits);
             reader.SetBranchAddres("Hits", &Hits);
@@ -69,7 +72,7 @@ public:
             for (int j = 0; j < Nhits; j++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(j));
-                if (hit->Time - min_time < 500 && hit->Charge > 100)
+                if (hit->Time - min_time < MIN_TIME_CUT && hit->Charge > MIN_CHARGE_CUT)
                 {
                     hists2D[0]->Fill((endpos-hit->Position).Mag(), hit->Charge);
                 }
@@ -82,7 +85,7 @@ public:
                 {
                     hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
                     
-                    if ((float)(endpos - hit->Position).Mag() > dist && hit->Charge > 80 && hit->Time - min_time < 1000)
+                    if ((float)(endpos - hit->Position).Mag() > dist && hit->Charge > MIN_CHARGE_CUT && hit->Time - min_time < MIN_TIME_CUT)
                     {
                         // std::cout << (float)(endpos - hit->Position).Mag() << '\t';
                         min_dist = std::min(min_dist, (float)(endpos - hit->Position).Mag());
@@ -97,7 +100,7 @@ public:
                 for (int j = 0; j < Nhits; j++)
                 {
                     hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(j));
-                    if ((float)(endpos - hit->Position).Mag() == min_dist && hit->Charge > 80 && hit->Time - min_time < 1000)
+                    if ((float)(endpos - hit->Position).Mag() == min_dist && hit->Charge > MIN_CHARGE_CUT && hit->Time - min_time < MIN_TIME_CUT)
                     {   
                         if (Cube_Number > Nhists - 1)
                         {
@@ -106,8 +109,8 @@ public:
                         
                         charge += hit->Charge;
                         Exact_Dist_Cubes++;
+                        tracklength += min_dist - dist;
                         dist = min_dist;
-                        // break;
                     }
                 }
                 if (Exact_Dist_Cubes != 0 && Cube_Number < Nhists - 1)
@@ -131,7 +134,8 @@ public:
             {
                 std::cout << "Event number " << eventCount << std::endl;
             }
-
+            // std::cout << tracklength << '\t';
+            hists[hists.size() - 1]->Fill(tracklength);
             IncrementEventCount();
         }
         catch(const std::exception& e)

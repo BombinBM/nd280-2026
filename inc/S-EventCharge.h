@@ -10,6 +10,8 @@
 #include "AnalysisStrategy.h"
 #include "FileReader.h"
 
+#include "config.h"
+
 #include "ND__TSFGReconModule__TSFGHit.h"
 
 class EventCharge : public AnalysisStrategy
@@ -49,10 +51,10 @@ public:
                 hit=dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
                 dt = hit->Time - t0;
                 dl = (hit->Position - pos).Mag();
-                if (dl < 30)
+                if (dl < MIN_LENGTH_BETWEEN_CUBES_CUT)
                 {
                     min_time = std::min(min_time,hit->Time);
-                    max_time = std::max(max_time,hit->Time);    
+                    max_time = std::max(max_time,hit->Time);
                 }
                 t0 = hit->Time;
                 pos = hit->Position; 
@@ -61,11 +63,16 @@ public:
             for (int it = 0; it < Nhits; it++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
-                edep->Fill(hit->Charge);
-                sum+= hit->Charge;
-                hists[2]->Fill(hit->Time - min_time);
+                if (hit->Time - min_time < MIN_TIME_CUT && hit->Charge > MIN_CHARGE_CUT)
+                {
+                    edep->Fill(hit->Charge);
+                    sum+= hit->Charge;
+                    hists[2]->Fill(hit->Time - min_time);
+                    // hit->Position.Print();
+                    // std::cout << hit->Charge;
+                }
             }
-            fulledep->Fill(sum);
+            fulledep->Fill(sum/2);
             IncrementEventCount();
             
         }
