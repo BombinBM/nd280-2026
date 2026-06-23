@@ -17,32 +17,52 @@
 class EventCharge : public AnalysisStrategy
 {
 private:
+    TClonesArray *Hits = nullptr;
+    ND::TSFGReconModule::TSFGHit *hit = nullptr;
+    int Nhits;
+
     TH1D *edep = nullptr;
     TH1D *fulledep = nullptr;
+    TH1D *timehist = nullptr;
 public:
     EventCharge() : AnalysisStrategy("EventCharge")
     {
         // std::cout << "EventCharge constructor started!" << std::endl;
         edep = new TH1D("Edep", "Edep, PE", 300, 0, 300);
         fulledep = new TH1D("FullEdep", "Full Edep, PE", 100, 0, 100000);
-
+        timehist = new TH1D("TimeHist", "Time of Hits", 200, 0, 2000);
         hists.push_back(edep);
         hists.push_back(fulledep);
-        hists.push_back(new TH1D("TimeHist", "Time of Hits", 200, 0, 2000));
+        hists.push_back(timehist);
     }
     ~EventCharge() = default;
+
+    void Begin(FileReader &reader) override
+    {
+        AnalysisStrategy::Begin(reader);
+        // set branch addresses to member variables so pointers remain valid
+        bool okN = reader.SetBranchAddres("NHits", &Nhits);
+        bool okH = reader.SetBranchAddres("Hits", &Hits);
+        if (!okN || !okH)
+        {
+            std::cerr << "EventCharge::Begin: failed to bind NHits/Hits branches" << std::endl;
+        }
+        edep->Reset();
+        fulledep->Reset();
+        timehist->Reset();
+    }
 
     void ProcessEvent(FileReader &reader) override
     {
         try
         {
-            TClonesArray *Hits = nullptr;
-            ND::TSFGReconModule::TSFGHit *hit = nullptr;
-            int Nhits;
+            // TClonesArray *Hits = nullptr;
+            // ND::TSFGReconModule::TSFGHit *hit = nullptr;
+            // int Nhits;
             double dl, dt, sum = 0;
             float min_time = 1e6, max_time = 0;
-            reader.SetBranchAddres("NHits", &Nhits);
-            reader.SetBranchAddres("Hits", &Hits);
+            // reader.SetBranchAddres("NHits", &Nhits);
+            // reader.SetBranchAddres("Hits", &Hits);
             reader.GetEntry(eventCount);
             TVector3 pos = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(0))->Position;
             float t0 = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(0))->Time;
@@ -67,7 +87,7 @@ public:
                 {
                     edep->Fill(hit->Charge);
                     sum+= hit->Charge;
-                    hists[2]->Fill(hit->Time - min_time);
+                    timehist->Fill(hit->Time - min_time);
                     // hit->Position.Print();
                     // std::cout << hit->Charge;
                 }

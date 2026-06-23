@@ -17,6 +17,10 @@
 class DrawFibers : public AnalysisStrategy
 {
 private:
+    TClonesArray *FibHits = nullptr;
+    ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
+    int NFibhits;
+
     TH2D* XYFibprojection = nullptr;
     TH2D* XZFibprojection = nullptr;
     TH2D* YZFibprojection = nullptr;
@@ -51,6 +55,25 @@ public:
         hists.push_back(ChargeZ);
     }
     ~DrawFibers() = default;
+
+    void Begin(FileReader &reader) override
+    {
+        AnalysisStrategy::Begin(reader);
+        bool okN = reader.SetBranchAddres("NFibers", &NFibhits);
+        bool okH = reader.SetBranchAddres("Fibers", &FibHits);
+        if (!okN || !okH)
+        {
+            std::cerr << "DrawFibers::Begin: failed to bind NFibers/Fibers branches" << std::endl;
+        }
+        XYFibprojection->Reset();
+        XZFibprojection->Reset();
+        YZFibprojection->Reset();
+
+        ChargeX->Reset();
+        ChargeY->Reset();
+        ChargeZ->Reset();
+    }
+
     // Запускает ридер одного эвента, а потом заполняет гистограммы положений файбера. Используется для анализа максимального
     // заряда в файбере, но не для полного энерговыделения, так как не учитывается crosstalk, метод валиден для треков, 
     // направленных почти коллинеарно одной из осей детектора
@@ -61,19 +84,19 @@ public:
             // 0 - not X or Y or Z, 1 - Z, 2 - Y, 3 - X
             int track_direction = TrackDirection(reader);
 
-            // std::cout << track_direction << '\t';
+            std::cout << track_direction << '\t';
 
-            TClonesArray *FibHits = nullptr;
-            ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
-            int NFibhits;
+            // TClonesArray *FibHits = nullptr;
+            // ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
+            // int NFibhits;
 
             double x,y,z,charge;
 
             std::map<double, double> ZYmap, ZXmap, YZmap, YXmap, XYmap, XZmap;
 
-            reader.SetBranchAddres("NFibers", &NFibhits);
-            reader.SetBranchAddres("Fibers", &FibHits);
-            reader.GetEntry(eventCount);
+            // reader.SetBranchAddres("NFibers", &NFibhits);
+            // reader.SetBranchAddres("Fibers", &FibHits);
+            // reader.GetEntry(eventCount);
 
             Fibhit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(FibHits->At(0));
             x = Fibhit->Position.X();
@@ -205,12 +228,12 @@ public:
 
     int TrackDirection(FileReader &reader)
     {
-        TClonesArray *FibHits = nullptr;
-        ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
-        int NFibhits;
+        // TClonesArray *FibHits = nullptr;
+        // ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
+        // int NFibhits;
 
-        reader.SetBranchAddres("NFibers", &NFibhits);
-        reader.SetBranchAddres("Fibers", &FibHits);
+        // reader.SetBranchAddres("NFibers", &NFibhits);
+        // reader.SetBranchAddres("Fibers", &FibHits);
         reader.GetEntry(eventCount);
 
         double x,y,z;

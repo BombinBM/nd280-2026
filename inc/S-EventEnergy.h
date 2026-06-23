@@ -4,16 +4,23 @@
 #include <iostream>
 #include <string>
 
-#include <TH1F.h>
+#include <TH1D.h>
+#include <TClonesArray.h>
 
 #include "AnalysisStrategy.h"
 #include "FileReader.h"
+
+#include "config.h"
 
 #include "ND__TSFGReconModule__TSFGHit.h"
 
 class EventEnergy : public AnalysisStrategy
 {
 private:
+    TClonesArray *TrueHits = nullptr;
+    ND::TSFGReconModule::TSFGHit *TrueHit = nullptr;
+    int NTrueHits = 0;
+
     TH1D *trueEdep = nullptr;
     TH1D *trueFulledep = nullptr;
 public:
@@ -28,20 +35,43 @@ public:
 
     ~EventEnergy() = default;
 
+    void Begin(FileReader &reader) override
+    {
+        AnalysisStrategy::Begin(reader);
+        // set branch addresses to member variables so pointers remain valid
+        bool okN = reader.SetBranchAddres("NTrueHits", &NTrueHits);
+        bool okH = reader.SetBranchAddres("TrueHits", &TrueHits);
+        if (!okN || !okH)
+        {
+            std::cerr << "EventEnergy::Begin: failed to bind NTrueHits/TrueHits branches" << std::endl;
+        }
+        trueEdep->Reset();
+        trueFulledep->Reset();
+    }
+
     void ProcessEvent(FileReader &reader) override
     {
         try
         {
-            TClonesArray *Hits = nullptr;
             ND::TSFGReconModule::TSFGHit *hit = nullptr;
-            int NHits;
             double sum = 0;
-            reader.SetBranchAddres("NTrueHits", &NHits);
-            reader.SetBranchAddres("TrueHits", &Hits);
-            reader.GetEntry(eventCount);
-            for (int i = 0; i < NHits; i++)
+
+            if (!reader.GetEntry(eventCount))
             {
-                hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
+                std::cerr << "EventEnergy: failed to read entry " << eventCount << std::endl;
+                return;
+            }
+
+            if (!TrueHits)
+            {
+                std::cerr << "EventEnergy: TrueHits pointer is null" << std::endl;
+                return;
+            }
+
+            for (int i = 0; i < NTrueHits; i++)
+            {
+                hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(TrueHits->At(i));
+                if (!hit) continue;
                 trueEdep->Fill(hit->Charge);
                 sum += hit->Charge;
             }

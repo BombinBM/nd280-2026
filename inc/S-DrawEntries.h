@@ -15,6 +15,10 @@
 class DrawEntries : public AnalysisStrategy
 {
 private:
+    TClonesArray *Hits = nullptr;
+    ND::TSFGReconModule::TSFGHit *hit = nullptr;
+    int Nhits;
+
     TH2D* XYprojection = nullptr;
     TH2D* XZprojection = nullptr;
     TH2D* YZprojection = nullptr;
@@ -31,16 +35,30 @@ public:
     }
     ~DrawEntries() = default;
 
+    void Begin(FileReader &reader) override
+    {
+        AnalysisStrategy::Begin(reader);
+        bool okN = reader.SetBranchAddres("NHits", &Nhits);
+        bool okH = reader.SetBranchAddres("Hits", &Hits);
+        if (!okN || !okH)
+        {
+            std::cerr << "DrawEntries::Begin: failed to bind NHits/Hits branches" << std::endl;
+        }
+        XYprojection->Reset();
+        XZprojection->Reset();
+        YZprojection->Reset();
+    }
+
     void ProcessEvent(FileReader &reader) override
     {
         try
         {
-            TClonesArray *Hits = nullptr;
-            ND::TSFGReconModule::TSFGHit *hit = nullptr;
-            int Nhits;
+            // TClonesArray *Hits = nullptr;
+            // ND::TSFGReconModule::TSFGHit *hit = nullptr;
+            // int Nhits;
 
-            reader.SetBranchAddres("NHits", &Nhits);
-            reader.SetBranchAddres("Hits", &Hits);
+            // reader.SetBranchAddres("NHits", &Nhits);
+            // reader.SetBranchAddres("Hits", &Hits);
             reader.GetEntry(eventCount);
             for (int it = 0; it < Nhits; it++)
             {

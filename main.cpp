@@ -70,21 +70,23 @@ int main(int argc, char** argv)
     // fiberStratMan.ProcessStrategies(fiber_reader);
 
     // fiberStratMan.ProcessEvent(fiber_reader);
-
-    // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
+    
+    // Debug: run only EventEnergy to isolate segfault
+    hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
     hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
-    // fiberStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
     hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
+    hitsStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
+    hitsStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
     // hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
 
     // strats = hitsStratMan.GetStrategyNames();
 
-    // hitsStratMan.ProcessStrategies(hits_reader);
+    hitsStratMan.ProcessStrategies(hits_reader);
 
-    for (int i = 0; i < 1; i++)
-    {
-        hitsStratMan.ProcessEvent(hits_reader);
-    }
+    // for (int i = 0; i < 5; i++)
+    // {
+        // hitsStratMan.ProcessEvent(hits_reader);
+    // }
     
 
     // stratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers()));

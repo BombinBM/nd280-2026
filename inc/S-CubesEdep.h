@@ -20,6 +20,8 @@ class CubesEdep : public AnalysisStrategy
 private:
     TClonesArray *Hits = nullptr;
     ND::TSFGReconModule::TSFGHit *hit = nullptr, *endhit=nullptr;
+    int NHits = 0;
+
     TVector3 endpos;
     int Ncubes = 250;
     int Nhists = 0;
@@ -42,25 +44,44 @@ public:
         Nhists = hists.size() - 1;
     } 
 
+    void Begin(FileReader &reader) override
+    {
+        AnalysisStrategy::Begin(reader);
+        bool okN = reader.SetBranchAddres("NHits", &NHits);
+        bool okH = reader.SetBranchAddres("Hits", &Hits);
+        if (!okN || !okH)
+        {
+            std::cerr << "CubesEdep::Begin: failed to bind NHits/Hits branches" << std::endl;
+        }
+        for (auto hist : hists)
+        {
+            hist->Reset();
+        }
+        for(auto hist2D : hists2D)
+        {
+            hist2D->Reset();
+        }
+    }
+
     void ProcessEvent(FileReader &reader) override
     {
         try
         {
-            int Nhits, Exact_Dist_Cubes = 0, Cube_Number = 0;
+            int Exact_Dist_Cubes = 0, Cube_Number = 0;
         
             float charge = 0, dist = 0, min_time = 1e6, max_charge = 0, min_dist = 1e6;
             double tracklength = 0;
 
-            reader.SetBranchAddres("NHits", &Nhits);
-            reader.SetBranchAddres("Hits", &Hits);
+            // reader.SetBranchAddres("NHits", &Nhits);
+            // reader.SetBranchAddres("Hits", &Hits);
             reader.GetEntry(eventCount);
-            for (int i = 0; i < Nhits; i++)
+            for (int i = 0; i < NHits; i++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
                 min_time = std::min(min_time,hit->Time);
                 max_charge = std::max(max_charge, hit->Charge);
             }
-            for (int it = 0; it < Nhits; it++)
+            for (int it = 0; it < NHits; it++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
                 if(hit->Charge == max_charge)
@@ -69,7 +90,7 @@ public:
                 }
             }
 
-            for (int j = 0; j < Nhits; j++)
+            for (int j = 0; j < NHits; j++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(j));
                 if (hit->Time - min_time < MIN_TIME_CUT && hit->Charge > MIN_CHARGE_CUT)
@@ -81,7 +102,7 @@ public:
             
             while (true)
             {
-                for (int i = 0; i < Nhits; i++)
+                for (int i = 0; i < NHits; i++)
                 {
                     hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
                     
@@ -97,7 +118,7 @@ public:
                 }
                 
                 // std::cout << min_dist << "\t";
-                for (int j = 0; j < Nhits; j++)
+                for (int j = 0; j < NHits; j++)
                 {
                     hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(j));
                     if ((float)(endpos - hit->Position).Mag() == min_dist && hit->Charge > MIN_CHARGE_CUT && hit->Time - min_time < MIN_TIME_CUT)

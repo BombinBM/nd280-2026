@@ -13,24 +13,41 @@
 
 #include "ND__TSFGReconModule__TSFGHit.h"
 
+// Использовать только по отдельности от всех остальных стратегий, так как TH3D очень сильно нагружает память и может вызвать утечку памяти при одновременном использовании с другими стратегиями.
+// Причем важно, что только с помощью цикла ProcessEvent.
 class EventHeatmap : public AnalysisStrategy
 {
+private:
+    TClonesArray *Hits = nullptr;
+    ND::TSFGReconModule::TSFGHit *hit = nullptr;
+    int Nhits;
 public:
     EventHeatmap() : AnalysisStrategy("EventHeatmap")
     {}    
+
+    void Begin(FileReader &reader) override
+    {
+        AnalysisStrategy::Begin(reader);
+        bool okN = reader.SetBranchAddres("NHits", &Nhits);
+        bool okH = reader.SetBranchAddres("Hits", &Hits);
+        if (!okN || !okH)
+        {
+            std::cerr << "EventHeatmap::Begin: failed to bind NHits/Hits branches" << std::endl;
+        }
+    }
 
     void ProcessEvent(FileReader &reader) override
     {
         try
         {
-            TClonesArray *Hits = nullptr;
-            ND::TSFGReconModule::TSFGHit *hit = nullptr, *endhit=nullptr, *beginhit=nullptr;
-            int Nhits;
+            // TClonesArray *Hits = nullptr;
+            // ND::TSFGReconModule::TSFGHit *hit = nullptr, *endhit=nullptr, *beginhit=nullptr;
+            // int Nhits;
             double x,y,z,t, charge;
             float min_time = 1e6;
             std::string name = "Heatmap of event number ";
-            reader.SetBranchAddres("NHits", &Nhits);
-            reader.SetBranchAddres("Hits", &Hits);
+            // reader.SetBranchAddres("NHits", &Nhits);
+            // reader.SetBranchAddres("Hits", &Hits);
             reader.GetEntry(eventCount);
 
             hists3D.push_back(new TH3D(name + eventCount + "\\time", "Event Heatmap", 194, -1000, 1000, 194, -3000, -1000, 58, -300, 300));
