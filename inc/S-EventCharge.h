@@ -28,7 +28,7 @@ public:
     EventCharge() : AnalysisStrategy("EventCharge")
     {
         // std::cout << "EventCharge constructor started!" << std::endl;
-        edep = new TH1D("Edep", "Edep, PE", 300, 0, 300);
+        edep = new TH1D("Edep", "Edep, PE", 500, 0, 500);
         fulledep = new TH1D("FullEdep", "Full Edep, PE", 100, 0, 100000);
         timehist = new TH1D("TimeHist", "Time of Hits", 200, 0, 2000);
         hists.push_back(edep);

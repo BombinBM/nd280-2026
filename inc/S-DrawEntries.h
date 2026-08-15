@@ -43,6 +43,7 @@ public:
         if (!okN || !okH)
         {
             std::cerr << "DrawEntries::Begin: failed to bind NHits/Hits branches" << std::endl;
+            return;  // Выход, если привязка не удалась
         }
         XYprojection->Reset();
         XZprojection->Reset();
@@ -53,16 +54,16 @@ public:
     {
         try
         {
-            // TClonesArray *Hits = nullptr;
-            // ND::TSFGReconModule::TSFGHit *hit = nullptr;
-            // int Nhits;
+            if (!Hits || Nhits < 0)
+                return;  // Пропустить, если нет данных
+            std::cout << "Обрабатывается событие " << GetEventCount() << std::endl;
 
-            // reader.SetBranchAddres("NHits", &Nhits);
-            // reader.SetBranchAddres("Hits", &Hits);
             reader.GetEntry(eventCount);
             for (int it = 0; it < Nhits; it++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
+                if (!hit) continue;  // Пропустить null указатели
+                
                 XYprojection->Fill(hit->Position.X(), hit->Position.Y(), hit->Charge);
                 XZprojection->Fill(hit->Position.Z(), hit->Position.X(), hit->Charge);
                 YZprojection->Fill(hit->Position.Z(), hit->Position.Y(), hit->Charge);

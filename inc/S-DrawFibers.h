@@ -29,14 +29,14 @@ private:
     TH1D* ChargeY = nullptr;
     TH1D* ChargeX = nullptr;
 
-    double XCut, YCut, ZCut, ECut;
+    double XCut, YCut, ZCut;
+    int LinearTracks;
 public:
     DrawFibers() : AnalysisStrategy("DrawFibers")
     {
         XCut = 1000;
         YCut = 600;
         ZCut = 0;
-        ECut = 10;
         XYFibprojection = new TH2D("FibHitsXY", "FibHitsXY", 194, -1000, 1000, 58, -300, 300);
         XZFibprojection = new TH2D("FibHitsXZ", "FibHitsXZ", 194, -3000, -1000, 194, -1000, 1000);
         YZFibprojection = new TH2D("FibHitsYZ", "FibHitsYZ", 194, -3000, -1000, 58, -300, 300);
@@ -59,6 +59,7 @@ public:
     void Begin(FileReader &reader) override
     {
         AnalysisStrategy::Begin(reader);
+        LinearTracks = reader.GetEntries();
         bool okN = reader.SetBranchAddres("NFibers", &NFibhits);
         bool okH = reader.SetBranchAddres("Fibers", &FibHits);
         if (!okN || !okH)
@@ -72,6 +73,8 @@ public:
         ChargeX->Reset();
         ChargeY->Reset();
         ChargeZ->Reset();
+
+        std::cout << "Begin is ready";
     }
 
     // Запускает ридер одного эвента, а потом заполняет гистограммы положений файбера. Используется для анализа максимального
@@ -84,7 +87,7 @@ public:
             // 0 - not X or Y or Z, 1 - Z, 2 - Y, 3 - X
             int track_direction = TrackDirection(reader);
 
-            std::cout << track_direction << '\t';
+            // std::cout << track_direction << '\t';
 
             // TClonesArray *FibHits = nullptr;
             // ND::TSFGReconModule::TSFGHit *Fibhit = nullptr;
@@ -112,7 +115,7 @@ public:
                 z = Fibhit->Position.Z();
                 charge = Fibhit->Charge;                
                 
-                if (charge > ECut && z < ZCut && y < YCut && x < XCut)
+                if (charge > STANDARD_ENERGY_CUT && z < ZCut && y < YCut && x < XCut)
                 {    
                     if (track_direction == 1)
                     {
@@ -245,7 +248,7 @@ public:
             x = Fibhit->Position.X();
             y = Fibhit->Position.Y();
             z = Fibhit->Position.Z();
-            if (Fibhit->Charge > ECut && z < ZCut && y < YCut && x < XCut)
+            if (Fibhit->Charge > STANDARD_ENERGY_CUT && z < ZCut && y < YCut && x < XCut)
             {
                 if(x > -980)
                 {
@@ -283,35 +286,35 @@ public:
             }
         }
 
-        if (abs(z_max-z_min) < 100 && abs(y_max-y_min) < 100 && abs(x_max-x_min) < 100)
+        if (abs(z_max-z_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(y_max-y_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(x_max-x_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT)
         {
             std::cout << "Too short track" << std::endl;
             return 0;
         }
-        if (abs(z_max-z_min) >= 100 && abs(y_max-y_min) < 100 && abs(x_max-x_min) < 100)
+        if (abs(z_max-z_min) >= MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(y_max-y_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(x_max-x_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT)
         {
             return 1;
         }
-        if (abs(z_max-z_min) < 100 && abs(y_max-y_min) >= 100 && abs(x_max-x_min) < 100)
+        if (abs(z_max-z_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(y_max-y_min) >= MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(x_max-x_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT)
         {
             return 2;
         }
-        if (abs(z_max-z_min) < 100 && abs(y_max-y_min) < 100 && abs(x_max-x_min) >= 100)
+        if (abs(z_max-z_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(y_max-y_min) < MAX_DIV_FOR_LINEAR_TRACK_CUT && abs(x_max-x_min) >= MAX_DIV_FOR_LINEAR_TRACK_CUT)
         {
             return 3;
         }
 
         // std::cout << "Track direction is undefined:" << (z_max-z_min) << '\t' << (y_max-y_min) << '\t' << (x_max-x_min) << std::endl;
+        LinearTracks--;
         std::cout << "Track direction is not X,Y,Z" << std::endl;
         return 0;
     }
 
-    void SetCuts(double x, double y, double z, double e) override
+    void SetCuts(double x, double y, double z) override
     {
         XCut = x;
         YCut = y;
         ZCut = z;
-        ECut = e;
     }
 
     void PrintCuts() override
@@ -320,15 +323,15 @@ public:
         std::cout << "   XCut = " << XCut << '\n';
         std::cout << "   YCut = " << YCut << '\n';
         std::cout << "   ZCut = " << ZCut << '\n';
-        std::cout << "   Energy Cut = " << ECut << '\n';
+        std::cout << "   ECut is standard = " << STANDARD_ENERGY_CUT << '\n';
     }
 
     void FitHists() const
     {
         for (const auto& hist : hists)
         {
-            TF1 *fit_fun = new TF1("fit_fun", "gaus", ECut, hist->GetXaxis()->GetXmax());
-            hist->Fit(fit_fun, "Q", "", ECut, hist->GetXaxis()->GetXmax());
+            TF1 *fit_fun = new TF1("fit_fun", "gaus", STANDARD_ENERGY_CUT, hist->GetXaxis()->GetXmax());
+            hist->Fit(fit_fun, "Q", "", STANDARD_ENERGY_CUT, hist->GetXaxis()->GetXmax());
             std::cout << "  Mean = " << fit_fun->GetParameter(1)  << "+-" << fit_fun->GetParError(1) << std::endl;
             std::cout << "  Sigma = " << fit_fun->GetParameter(2) << "+-" << fit_fun->GetParError(2) << std::endl;
         }
@@ -336,7 +339,9 @@ public:
 
     void PrintStats() const override
     {
+        int total_events = GetEventCount(), linear_tracks = LinearTracks;
         AnalysisStrategy::PrintStats();
+        std::cout << "   ◀ Прямолинейных треков: " << linear_tracks / static_cast<double>(total_events) * 100 << " %" << std::endl;
         FitHists();
     }
 };

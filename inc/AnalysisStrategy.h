@@ -145,7 +145,7 @@ public:
     std::string GetName() const {return stratName;}
     int GetEventCount() const {return eventCount;}
 
-    virtual void SetCuts(double x, double y, double z, double e) {};
+    virtual void SetCuts(double x, double y, double z) {};
     virtual void PrintCuts() {};
 
     protected:
