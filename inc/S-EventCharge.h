@@ -5,6 +5,7 @@
 #include <string>
 
 #include <TH1D.h>
+#include <TH3D.h>
 #include <TClonesArray.h>
 
 #include "AnalysisStrategy.h"
@@ -24,16 +25,19 @@ private:
     TH1D *edep = nullptr;
     TH1D *fulledep = nullptr;
     TH1D *timehist = nullptr;
+    TH3D *nummber_of_cubes = nullptr;
 public:
     EventCharge() : AnalysisStrategy("EventCharge")
     {
         // std::cout << "EventCharge constructor started!" << std::endl;
         edep = new TH1D("Edep", "Edep, PE", 500, 0, 500);
-        fulledep = new TH1D("FullEdep", "Full Edep, PE", 100, 0, 100000);
+        fulledep = new TH1D("FullEdep", "Full Edep, PE", 100, 0, 50000);
         timehist = new TH1D("TimeHist", "Time of Hits", 200, 0, 2000);
+        nummber_of_cubes = new TH3D("PID hist", "PID hist", 300, 0, 300, 500, 0, 500, 100, 0, 50000);
         hists.push_back(edep);
         hists.push_back(fulledep);
         hists.push_back(timehist);
+        hists3D.push_back(nummber_of_cubes);
     }
     ~EventCharge() = default;
 
@@ -59,7 +63,7 @@ public:
             // TClonesArray *Hits = nullptr;
             // ND::TSFGReconModule::TSFGHit *hit = nullptr;
             // int Nhits;
-            double dl, dt, sum = 0;
+            double dl, dt, sum = 0, entered_hits = 0;
             float min_time = 1e6, max_time = 0;
             // reader.SetBranchAddres("NHits", &Nhits);
             // reader.SetBranchAddres("Hits", &Hits);
@@ -88,13 +92,12 @@ public:
                     edep->Fill(hit->Charge);
                     sum+= hit->Charge;
                     timehist->Fill(hit->Time - min_time);
-                    // hit->Position.Print();
-                    // std::cout << hit->Charge;
+                    entered_hits++;
                 }
             }
             fulledep->Fill(sum/2);
+            nummber_of_cubes->Fill(entered_hits / 2, (sum / 2) / entered_hits, sum / 2);
             IncrementEventCount();
-            
         }
         catch(const std::exception& e)
         {

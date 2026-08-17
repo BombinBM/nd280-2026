@@ -23,10 +23,10 @@ protected:
     std::vector<TH1*> hists;
     std::vector<TH2*> hists2D;
     std::vector<TH3*> hists3D;
-    int eventCount;
+    int eventCount, events;
 public:
     AnalysisStrategy(const std::string& name)
-    :stratName(name), eventCount(0) 
+    :stratName(name), eventCount(0), events(0)
     {
         std::cout << "  🔨 AnalysisStrategy конструктор: " << name << std::endl;
     }
@@ -46,6 +46,7 @@ public:
     {
         std::cout << " ▶ Начало стратегии: " << stratName << std::endl;
         eventCount = 0;
+        events = reader.GetEntries();
         start = std::chrono::high_resolution_clock::now();
     }
 
@@ -55,7 +56,7 @@ public:
     {
         try
         {
-            for (int i = 0; i < reader.GetEntries(); i++)
+            for (int i = 0; i < events; i++)
             {
                 ProcessEvent(reader);
             }

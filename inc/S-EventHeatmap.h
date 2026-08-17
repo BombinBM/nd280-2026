@@ -28,6 +28,7 @@ public:
     void Begin(FileReader &reader) override
     {
         AnalysisStrategy::Begin(reader);
+        events = 10; // Количество событий, для которых будет строиться тепловая карта      
         bool okN = reader.SetBranchAddres("NHits", &Nhits);
         bool okH = reader.SetBranchAddres("Hits", &Hits);
         if (!okN || !okH)
@@ -67,12 +68,7 @@ public:
                 z = hit->Position.Z();
                 t = hit->Time;
                 charge = hit->Charge;
-                // if (t == min_time)
-                // {
-                //     hists3D.back()->Fill(x,z,y,1000);    
-                // }
-                // else
-                if(charge > 100 && t - min_time < 500)
+                if(charge > MIN_CHARGE_CUT && t - min_time < MIN_TIME_CUT)
                 {
                     hists3D[2*eventCount]->Fill(x,z,y,t - min_time);
                     hists3D[2*eventCount+1]->Fill(x,z,y,charge);
@@ -85,6 +81,11 @@ public:
         {
             std::cerr << e.what() << "\n";
         }
+    }
+
+    void SetEvents(int n)
+    {
+        events = n;
     }
 };
 

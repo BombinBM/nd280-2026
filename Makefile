@@ -12,6 +12,9 @@ INCDIR := inc
 SFGDIR := test3/SFGAnalysis
 BUILDDIR := build
 TARGET := bin/project
+MERGE_TARGET := bin/merge_root_files
+MERGE_SRC := merge_root_files.cpp
+MERGE_OBJ := $(BUILDDIR)/merge_root_files.o
 
 # Исходные файлы
 
@@ -32,18 +35,24 @@ LDFLAGS := $(ROOTLIBS) -L$(SFGDIR) $(SFG_LIBS)
 
 # Цели по умолчанию
 
-.PHONY: all clean run info dirs
+.PHONY: all clean run info dirs merge_root_files
 
-all: dirs $(TARGET)
+all: dirs $(TARGET) $(MERGE_TARGET)
 
 dirs:
 	@mkdir -p $(BUILDDIR)
 	@mkdir -p $(dir $(TARGET))
+	@mkdir -p $(dir $(MERGE_TARGET))
 
 # Линковка исполняемого файла
 $(TARGET): $(OBJECTS)
 	@echo "Linking $@..."
 	$(CXX) $^ -o $@ $(LDFLAGS)
+	@echo "Done!"
+
+$(MERGE_TARGET): $(MERGE_OBJ)
+	@echo "Linking $@..."
+	$(CXX) $^ -o $@
 	@echo "Done!"
 
 # Компиляция с автоматическим отслеживанием зависимостей
@@ -52,6 +61,10 @@ $(BUILDDIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+	@echo "Compiling $<..."
+	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(MERGE_OBJ): $(MERGE_SRC)
 	@echo "Compiling $<..."
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
@@ -80,6 +93,9 @@ run: all
 	@$(TARGET)
 	@export LD_LIBRARY_PATH=$(SFGDIR):$$LD_LIBRARY_PATH; ./$(TARGET)
 
+merge_root_files: $(MERGE_TARGET)
+	@echo "Built $(MERGE_TARGET)"
+
 # Информация о конфигурации
 info:
 	@echo "Project Configuration:"
@@ -94,11 +110,12 @@ info:
 #  Помощь
 help:
 	@echo "Available targets:"
-	@echo "  all    - Build the program (default)"
-	@echo "  run    - Build and run the program"
-	@echo "  clean  - Remove build files"
-	@echo "  info   - Show configuration"
-	@echo "  help   - Show this help"
+	@echo "  all                - Build the project and merge tool (default)"
+	@echo "  run                - Build and run the main program"
+	@echo "  merge_root_files   - Build the ROOT merge utility"
+	@echo "  clean              - Remove build files"
+	@echo "  info               - Show configuration"
+	@echo "  help               - Show this help"
 
 # Файлы, не являющиеся целями
 .PRECIOUS: $(BUILDDIR)/%.o

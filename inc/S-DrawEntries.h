@@ -9,6 +9,7 @@
 
 #include "AnalysisStrategy.h"
 #include "FileReader.h"
+#include "config.h"
 
 #include "ND__TSFGReconModule__TSFGHit.h"
 
@@ -56,17 +57,39 @@ public:
         {
             if (!Hits || Nhits < 0)
                 return;  // Пропустить, если нет данных
-            std::cout << "Обрабатывается событие " << GetEventCount() << std::endl;
+
+            double x, y, z, t, charge;
+            float min_time = 1e6;
 
             reader.GetEntry(eventCount);
+
+            for (int it = 0; it < Nhits; it++)
+            {
+                hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
+                if (!hit) continue;  // Пропустить null указатели
+                min_time = std::min(min_time, hit->Time);
+            }
+            
+
             for (int it = 0; it < Nhits; it++)
             {
                 hit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(it));
                 if (!hit) continue;  // Пропустить null указатели
                 
-                XYprojection->Fill(hit->Position.X(), hit->Position.Y(), hit->Charge);
-                XZprojection->Fill(hit->Position.Z(), hit->Position.X(), hit->Charge);
-                YZprojection->Fill(hit->Position.Z(), hit->Position.Y(), hit->Charge);
+
+                x = hit->Position.X();
+                y = hit->Position.Y();
+                z = hit->Position.Z();
+                t = hit->Time;
+                charge = hit->Charge;
+
+                if (charge > MIN_CHARGE_CUT && t - min_time < MIN_TIME_CUT)
+                {
+                    XYprojection->Fill(x, y, charge);
+                    XZprojection->Fill(z, x, charge);
+                    YZprojection->Fill(z, y, charge);
+                }
+                
             }
             IncrementEventCount();
         }
