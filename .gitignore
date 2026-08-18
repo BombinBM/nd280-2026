@@ -127,3 +127,6 @@ logs/
 *.gdml
 *.geom
 *.geometry
+
+# venv файлы
+venv/
