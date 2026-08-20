@@ -67,7 +67,7 @@ def main(path, particle_pdg = "-13"):
             hit = read_arr.At(j)
             charge += hit.Charge
             if (hit.Position - pos).Mag() < 30:
-                min_time = min(hit.Time, min_time)
+                min_time = min(hiparticle_pdgt.Time, min_time)
                 max_time = max(hit.Time, max_time)
         interested.append([0, charge / 2, 0, min_time, max_time])
 
@@ -94,7 +94,7 @@ def main(path, particle_pdg = "-13"):
     print(f"Процентов событий с нулевым количеством вошедших хитов: {zeros / tree.GetEntries() * 100:.3f}%")
     print(interested_data.head())
     print(interested_data.describe())
-    interested_data.to_csv(f"{get_pdg_from_argv(particle_pdg)}_data.csv", index=False, mode="a")
+    interested_data.to_csv(f"{get_pdg_from_argv(particle_pdg)}_data.csv", index=False, mode="a", header= False)
     figure = plt.figure(figsize=(10, 6))
     ax = figure.add_subplot(projection='3d')
     ax.scatter(interested_data["entered_hits"], interested_data["total_charge"], interested_data["average_charge"], cmap='viridis')

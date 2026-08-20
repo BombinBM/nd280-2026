@@ -13,6 +13,7 @@ df = pd.concat([pd.read_csv(file) for file in files if os.path.exists(file)], ig
 # Expected columns: PDG, entered_hits,total_charge,average_charge,min_time,max_time
 
 required_columns = ["PDG", "entered_hits", "total_charge", "average_charge", "min_time", "max_time"]
+
 missing = [col for col in required_columns if col not in df.columns]
 
 if missing:
@@ -22,7 +23,7 @@ if missing:
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d")
 
-ax.scatter(df["entered_hits"], df["total_charge"], df["average_charge"], c=df["PDG"], cmap='viridis')
+ax.scatter(df["entered_hits"], df["total_charge"], df["average_charge"], c=df["PDG"], cmap='plasma_r')
 
 ax.set_xlabel("Entered Hits")
 ax.set_ylabel("Total Charge")
