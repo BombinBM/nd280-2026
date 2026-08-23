@@ -67,7 +67,7 @@ def main(path, particle_pdg = "-13"):
             hit = read_arr.At(j)
             charge += hit.Charge
             if (hit.Position - pos).Mag() < 30:
-                min_time = min(hiparticle_pdgt.Time, min_time)
+                min_time = min(hit.particle_pdg.Time, min_time)
                 max_time = max(hit.Time, max_time)
         interested.append([0, charge / 2, 0, min_time, max_time])
 

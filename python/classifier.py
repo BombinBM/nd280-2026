@@ -189,19 +189,35 @@ def train_and_evaluate(X, y, n_estimators=100, test_size=0.2, random_state=42, o
         X, y, test_size=test_size, random_state=random_state, stratify=y if len(np.unique(y)) > 1 else None
     )
 
+    # max_iter = n_estimators
+
     pipeline = Pipeline([
         ("scaler", StandardScaler()),
         ("gb", GradientBoostingClassifier(n_estimators=n_estimators, random_state=random_state, verbose=0)),
     ])
 
+    # model = HistGradientBoostingClassifier(
+    #     max_iter=max_iter,
+    #     max_bins=255,
+    #     early_stopping=True,
+    #     random_state=random_state
+    # )
+
     print("Training model...")
+    # model.fit(X_train, y_train)
     pipeline.fit(X_train, y_train)
+    
 
     preds = pipeline.predict(X_test)
     probs = pipeline.predict_proba(X_test) if hasattr(pipeline, "predict_proba") else None
 
+    # hist_preds = model.predict(X_test)
+    
     print("\nClassification report:\n", classification_report(y_test, preds, digits=4))
+    # print("\nClassification report:\n", classification_report(y_test, hist_preds, digits=4))
+        
     print("Confusion matrix:\n", confusion_matrix(y_test, preds))
+    # print("Confusion matrix:\n", confusion_matrix(y_test, hist_preds))
     if probs is not None and len(np.unique(y_test)) >= 2:
         if plot_prefix:
             from sklearn.metrics import roc_curve, auc
@@ -216,11 +232,6 @@ def train_and_evaluate(X, y, n_estimators=100, test_size=0.2, random_state=42, o
                 fpr = dict()
                 tpr = dict()
                 roc_auc = dict()
-
-                # if len(probs.shape) == 1:
-                # # Если probs одномерный, значит это бинарная классификация
-                # # Преобразуем в матрицу с двумя столбцами
-                #     probs = np.column_stack([1 - probs, probs])
 
                 for i in range(n_classes):
                     fpr[i], tpr[i], _ = roc_curve(y_test_binarized[:, i], probs[:, i])
