@@ -28,7 +28,7 @@ public:
     void Begin(FileReader &reader) override
     {
         AnalysisStrategy::Begin(reader);
-        events = 10; // Количество событий, для которых будет строиться тепловая карта      
+        events = 15; // Количество событий, для которых будет строиться тепловая карта      
         bool okN = reader.SetBranchAddres("NHits", &Nhits);
         bool okH = reader.SetBranchAddres("Hits", &Hits);
         if (!okN || !okH)

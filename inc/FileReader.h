@@ -10,6 +10,7 @@
 #include <typeindex>
 #include <stdexcept>
 
+#include "TChain.h"
 #include "TFile.h"
 #include "TTreeReader.h"
 #include "TTreeReaderArray.h"
@@ -61,6 +62,7 @@ private:
 
     void InitializeReader();
 
+    std::unique_ptr<TChain> chain;
     std::unique_ptr<TFile> rootFile;
     std::unique_ptr<TTreeReader> treeReader;
     std::string treeName; 
@@ -71,18 +73,22 @@ private:
 template<typename T>
 bool FileReader::SetBranchAddres(const std::string& branchname, T* addres)
 {
-    if(!treeReader || !treeReader->GetTree())
-    {
-        return false;
-    }
 
-    auto* tree = treeReader->GetTree();
-    auto* branch = tree->GetBranch(branchname.c_str());
+    if(!chain) return false;
+    return chain->SetBranchAddress(branchname.c_str(), addres) >= 0;
 
-    if(!branch)
-    {return false;}
-    branch->SetAddress(addres);
-    return true;
+    // if(!treeReader || !treeReader->GetTree())
+    // {
+    //     return false;
+    // }
+
+    // auto* tree = treeReader->GetTree();
+    // auto* branch = tree->GetBranch(branchname.c_str());
+
+    // if(!branch)
+    // {return false;}
+    // branch->SetAddress(addres);
+    // return true;
 }
 
 template<typename T>
@@ -146,9 +152,12 @@ T FileReader::GetValue(const std::string& branchname)
 
     try
     {
-        auto* reader = std::any_cast<std::unique_ptr<TTreeReaderValue<T>>>(&it->second);
-        if (reader && *reader)
-        {return **(*reader);}
+        auto& readerPtr = std::any_cast<const std::unique_ptr<TTreeReaderValue<T>>&>(it->second);
+        if (readerPtr && readerPtr->IsValid())
+            return **readerPtr;
+        // auto* reader = std::any_cast<std::unique_ptr<TTreeReaderValue<T>>>(&it->second);
+        // if (reader && *reader)
+        // {return **(*reader);}
 
     } catch (const std::bad_any_cast& e)
     {
@@ -163,17 +172,17 @@ std::vector<T> FileReader::GetArray(const std::string& branchname)
     auto it = branchReaders.find(branchname);
     if (it == branchReaders.end())
     {
-        throw std::runtime_error("Branch reader not found: " +branchname);
+        throw std::runtime_error("Branch reader not found: " + branchname);
     }
-
+    
     try
     {
-        auto* reader = std::any_cast<std::unique_ptr<TTreeReaderArray<T>>>(&it->second);
-        if (reader && *reader)
+        auto& readerPtr = std::any_cast<const std::unique_ptr<TTreeReaderArray<T>>&>(it->second);
+        if (readerPtr)
         {
             std::vector<T> result;
-            result.reserve((*reader)->GetSize);
-            for (const auto& element: **reader)
+            result.reserve(readerPtr->GetSize());
+            for (const auto& element : *readerPtr)
             {
                 result.push_back(element);
             }
@@ -185,6 +194,33 @@ std::vector<T> FileReader::GetArray(const std::string& branchname)
         throw std::runtime_error("Type mismatch for branch: " +branchname);
     }
     throw std::runtime_error("Failed to get array for branch: "+branchname);
+
+    
+    // auto it = branchReaders.find(branchname);
+    // if (it == branchReaders.end())
+    // {
+    //     throw std::runtime_error("Branch reader not found: " +branchname);
+    // }
+
+    // try
+    // {
+    //     auto* reader = std::any_cast<std::unique_ptr<TTreeReaderArray<T>>>(&it->second);
+    //     if (reader && *reader)
+    //     {
+    //         std::vector<T> result;
+    //         result.reserve((*reader)->GetSize);
+    //         for (const auto& element: **reader)
+    //         {
+    //             result.push_back(element);
+    //         }
+    //         return result;
+    //     }
+    // }
+    // catch(const std::bad_any_cast& e)
+    // {
+    //     throw std::runtime_error("Type mismatch for branch: " +branchname);
+    // }
+    // throw std::runtime_error("Failed to get array for branch: "+branchname);
 }
 
 

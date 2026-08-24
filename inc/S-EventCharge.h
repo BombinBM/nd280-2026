@@ -45,6 +45,7 @@ public:
     {
         AnalysisStrategy::Begin(reader);
         // set branch addresses to member variables so pointers remain valid
+        // events = std::min(events, 1000);
         bool okN = reader.SetBranchAddres("NHits", &Nhits);
         bool okH = reader.SetBranchAddres("Hits", &Hits);
         if (!okN || !okH)
@@ -60,15 +61,23 @@ public:
     {
         try
         {
-            // TClonesArray *Hits = nullptr;
-            // ND::TSFGReconModule::TSFGHit *hit = nullptr;
-            // int Nhits;
             double dl, dt, sum = 0, entered_hits = 0;
             float min_time = 1e6, max_time = 0;
-            // reader.SetBranchAddres("NHits", &Nhits);
-            // reader.SetBranchAddres("Hits", &Hits);
+
             reader.GetEntry(eventCount);
-            TVector3 pos = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(0))->Position;
+            // std::cout << Nhits << '\t';
+            if(Nhits == 0)
+            {
+                IncrementEventCount();
+                return;
+            }
+            auto* firsthit = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(0));
+            if(!firsthit)
+            {
+                return;
+            }
+            TVector3 pos = firsthit->Position;
+            
             float t0 = dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(0))->Time;
             for (int i = 0; i < Nhits; i++)
             {

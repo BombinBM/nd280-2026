@@ -73,11 +73,11 @@ int main(int argc, char** argv)
     
     // Debug: run only EventEnergy to isolate segfault
     // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
-    hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
+    // hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
     // hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
     // hitsStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
     // hitsStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
-    // hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
+    hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
 
     // strats = hitsStratMan.GetStrategyNames();
 

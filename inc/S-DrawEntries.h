@@ -55,9 +55,6 @@ public:
     {
         try
         {
-            if (!Hits || Nhits < 0)
-                return;  // Пропустить, если нет данных
-
             double x, y, z, t, charge;
             float min_time = 1e6;
 
