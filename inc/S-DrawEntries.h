@@ -99,7 +99,6 @@ public:
     void End()
     {
         AnalysisStrategy::End();
-        
     }
 
     void PrintStats() const override
