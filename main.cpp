@@ -44,10 +44,12 @@ int main(int argc, char** argv)
     gROOT->ProcessLine(".L /home/bogdan/Desktop/VScode/nd280-2026/test3/SFGAnalysis/SFGAnalysis.so");
 
     std::string treename = "ReconDir/SFG";
+    std::string true_treename = "TruthDir/Trajectories";
 
     FileReader hits_reader, true_reader, fiber_reader;
 
-    if (!hits_reader.OpenFile(filename, treename) || !true_reader.OpenFile(filename, treename) || !fiber_reader.OpenFile(filename, treename))
+    if (!hits_reader.OpenFile(filename, treename) || !true_reader.OpenFile(filename, true_treename) || !fiber_reader.OpenFile(filename, treename))
+    // if (!true_reader.OpenFile(filename, true_treename))
     {
         std::cerr << "Failed to open file" << endl;
         return 0;
@@ -58,30 +60,29 @@ int main(int argc, char** argv)
 
     StrategyManager hitsStratMan, trueStratMan, fiberStratMan;
 
-    // trueStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
+    // True strategy manager
+    // trueStratMan.AddStrategy(std::unique_ptr<TrajRecognition>(new TrajRecognition));
+    // const std::string name = "TrajRecognition", mode = "True";
+
+    // trueStratMan.GetStrategy<TrajRecognition>(name)->SetMode(mode);
 
     // trueStratMan.ProcessStrategies(true_reader);
 
-    // strats = fiberStratMan.GetStrategyNames();
 
-    // fiberStratMan.GetStrategy<DrawFibers>(strats[0])->SetCuts(1000,600,-1855, 10);
-    // fiberStratMan.GetStrategy<DrawFibers>(strats[0])->PrintCuts();
-
-    // fiberStratMan.ProcessStrategies(fiber_reader);
-
-    // fiberStratMan.ProcessEvent(fiber_reader);
+    // Hits Strategy manager
     
-    // Debug: run only EventEnergy to isolate segfault
     // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
-    hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
+    // hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
     // hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
     // hitsStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
     // hitsStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
     // hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
+    hitsStratMan.AddStrategy(std::unique_ptr<TrajRecognition>(new TrajRecognition));
 
     // strats = hitsStratMan.GetStrategyNames();
 
     hitsStratMan.ProcessStrategies(hits_reader);
+
 
     // for (int i = 0; i < 1; i++)
     // {
@@ -110,19 +111,19 @@ int main(int argc, char** argv)
     if(!outputfileoption.empty() && !outputfilename.empty())
     {
         hitsStratMan.WriteAll(outputfilename, outputfileoption);
-        // trueStratMan.WriteAll(outputfilename, outputfileoption);
+        trueStratMan.WriteAll(outputfilename, outputfileoption);
         // fiberStratMan.WriteAll(outputfilename, outputfileoption);
     }
     else if(!outputfilename.empty())
     {
         hitsStratMan.WriteAll(outputfilename);
-        // trueStratMan.WriteAll(outputfilename);
+        trueStratMan.WriteAll(outputfilename);
         // fiberStratMan.WriteAll(outputfilename);
     }
     else
     {
         hitsStratMan.WriteAll();
-        // trueStratMan.WriteAll();
+        trueStratMan.WriteAll();
         // fiberStratMan.WriteAll();
     }
     auto end = std::chrono::high_resolution_clock::now();

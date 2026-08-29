@@ -21,5 +21,6 @@
 #include "inc/S-DrawFibers.h"
 #include "inc/S-CubesEdep.h"
 #include "inc/S-EventHeatmap.h"
+#include "inc/S-TrajRecognition.h"
 
 #include "test3/SFGAnalysis/ND__TSFGReconModule__TSFGHit.h"

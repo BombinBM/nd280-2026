@@ -21,7 +21,8 @@ def get_pdg_from_argv(input: str) -> str:
         "321": "kaon+",
         "-321": "kaon-",
         "2212": "proton",
-        "-2212": "antiproton"
+        "-2212": "antiproton",
+        "0": "test",
     }
     return cases.get(input, "undefined particle")
 
@@ -53,55 +54,103 @@ def main(path, particle_pdg = "-13"):
     read_arr = ROOT.TClonesArray("ND::TSFGReconModule::TSFGHit")
     tree.SetBranchAddress("Hits", read_arr)
     
-    entries = []
+    # entries = []
     interested = []
     zeros = 0
-    # Обязательно сделать проверку на количество хитов со временем больше ката и при большом количестве откидывать минимальное время и считать иначе, иначе будет слишком много нулевых событий
+    null_events = 0
+
     for i in tqdm.tqdm(range(tree.GetEntries())):
         tree.GetEntry(i)
+        if read_arr.GetEntries() == 0 or not read_arr.At(0):
+            # print("Problem with event\n")
+            null_events += 1
+            continue
+
         min_time = float('inf')
         max_time = 0
-        charge = 0
+        Charge_deposition = 0
+        Entered_hits = 0
         pos = read_arr.At(0).Position
-        for j in range(read_arr.GetEntries()):
-            hit = read_arr.At(j)
-            charge += hit.Charge
-            if (hit.Position - pos).Mag() < 30:
-                min_time = min(hit.particle_pdg.Time, min_time)
+        for it in range(read_arr.GetEntries()):
+            hit = read_arr.At(it)
+            if not hit:
+                print("Null hit\t")
+            pos_diff = pos - hit.Position
+            if pos_diff.Mag() < 30:
+                min_time = min(hit.Time, min_time)
                 max_time = max(hit.Time, max_time)
-        interested.append([0, charge / 2, 0, min_time, max_time])
+            pos = hit.Position
 
-    for i in tqdm.tqdm(range(tree.GetEntries())):
-        tree.GetEntry(i)
-        entered_hits = 0
-        for j in range(read_arr.GetEntries()):
-            hit = read_arr.At(j)
+        for it in range(read_arr.GetEntries()):
+            hit = read_arr.At(it)
 
-            entries.append([i+1, hit.Charge, hit.Time, hit.Position.X(), hit.Position.Y(), hit.Position.Z()])
-            if hit.Charge > 80 and hit.Time - interested[i][3] < 500:
-                entered_hits += 1
-        interested[i][0] = entered_hits / 2
-        if entered_hits > 0:
-            interested[i][2] = interested[i][1] / entered_hits
+            if hit.Charge > 80 and hit.Time - min_time < 500:
+                Entered_hits += 1
+                Charge_deposition += hit.Charge
+
+        if Entered_hits > 10:
+            interested.append([Entered_hits / 2, Charge_deposition / 2, Charge_deposition / Entered_hits, min_time, max_time])
         else:
             zeros += 1
-    fulldata = pd.DataFrame(entries, columns=["event", "charge", "time", "pos_x", "pos_y", "pos_z"])
+    # for i in tqdm.tqdm(range(tree.GetEntries())):
+    #     tree.GetEntry(i)
+    #     if read_arr.GetEntries() == 0 or not read_arr.At(0):
+    #         null_events += 1
+    #         continue
+    #     min_time = float('inf')
+    #     max_time = 0
+    #     charge = 0
+    #     entered = 0
+    #     pos = read_arr.At(0).Position
+    #     for j in range(read_arr.GetEntries()): 
+    #         hit = read_arr.At(j)
+    #         if not hit:
+    #             continue
+    #         charge += hit.Charge
+    #         if (hit.Position - pos).Mag() < 30:
+    #             min_time = min(hit.Time, min_time)
+    #             max_time = max(hit.Time, max_time)
+    #             entered += 1
+    #     if (charge > 300 and entered > 10):
+    #         interested.append([0, charge / 2, 0, min_time, max_time])
+
+    # # for i in tqdm.tqdm(range(tree.GetEntries())):
+    # for i in tqdm.tqdm(range(len(interested))):
+    #     tree.GetEntry(i)
+    #     entered_hits = 0
+    #     for j in range(read_arr.GetEntries()):
+    #         hit = read_arr.At(j)
+
+    #         # entries.append([i, hit.Charge, hit.Time, hit.Position.X(), hit.Position.Y(), hit.Position.Z()])
+    #         if hit.Charge > 30 and hit.Time - interested[i][3] < 500:
+    #         # if hit.Charge > 30:
+    #             entered_hits += 1
+
+    #     if entered_hits > 10:
+    #         interested[i][0] = entered_hits / 2
+    #         interested[i][2] = interested[i][1] / entered_hits
+    #     else:
+    #         zeros += 1
+    # fulldata = pd.DataFrame(entries, columns=["event", "charge", "time", "pos_x", "pos_y", "pos_z"])
     # print(fulldata.head())
     # print(fulldata.describe())
+    interested = [row for row in interested if row[0] != 0 ]
     interested_data = pd.DataFrame(interested, columns=["entered_hits", "total_charge", "average_charge", "min_time", "max_time"])
     interested_data.insert(0, "PDG", particle_pdg)
 
-    print(f"Процентов событий с нулевым количеством вошедших хитов: {zeros / tree.GetEntries() * 100:.3f}%")
+    print(f"Процентов событий с нулевым количеством вошедших хитов: {(zeros + null_events) / tree.GetEntries() * 100:.3f}%")
     print(interested_data.head())
     print(interested_data.describe())
+
     interested_data.to_csv(f"{get_pdg_from_argv(particle_pdg)}_data.csv", index=False, mode="a", header= False)
     figure = plt.figure(figsize=(10, 6))
     ax = figure.add_subplot(projection='3d')
     ax.scatter(interested_data["entered_hits"], interested_data["total_charge"], interested_data["average_charge"], cmap='viridis')
 
     plt.suptitle("Charge distribution")
-    plt.xlabel("Charge")
-    plt.ylabel("Counts")
+    ax.set_xlabel("Entered Hits")
+    ax.set_ylabel("Charge")
+    ax.set_zlabel("Average Charge")
     plt.show()
 
 

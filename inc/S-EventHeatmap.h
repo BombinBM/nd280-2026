@@ -28,7 +28,7 @@ public:
     void Begin(FileReader &reader) override
     {
         AnalysisStrategy::Begin(reader);
-        events = 10; // Количество событий, для которых будет строиться тепловая карта      
+        events = 15; // Количество событий, для которых будет строиться тепловая карта      
         bool okN = reader.SetBranchAddres("NHits", &Nhits);
         bool okH = reader.SetBranchAddres("Hits", &Hits);
         if (!okN || !okH)
@@ -44,7 +44,8 @@ public:
             // TClonesArray *Hits = nullptr;
             // ND::TSFGReconModule::TSFGHit *hit = nullptr, *endhit=nullptr, *beginhit=nullptr;
             // int Nhits;
-            double x,y,z,t, charge;
+            std::vector<int> PDGS;
+            double x,y,z,t, charge, dpdg;
             float min_time = 1e6;
             std::string name = "Heatmap of event number ";
             // reader.SetBranchAddres("NHits", &Nhits);
@@ -53,7 +54,7 @@ public:
 
             hists3D.push_back(new TH3D(name + eventCount + "\\time", "Event Heatmap", 194, -1000, 1000, 194, -3000, -1000, 58, -300, 300));
             hists3D.push_back(new TH3D(name + eventCount + "\\charge", "Event Heatmap", 194, -1000, 1000, 194, -3000, -1000, 58, -300, 300));
-
+            hists3D.push_back(new TH3D(name + eventCount + "\\PDG", "Event Heatmap", 194, -1000, 1000, 194, -3000, -1000, 58, -300, 300));
             for (int i = 0; i < Nhits; i++)
             {
                 hit=dynamic_cast<ND::TSFGReconModule::TSFGHit*>(Hits->At(i));
@@ -68,10 +69,18 @@ public:
                 z = hit->Position.Z();
                 t = hit->Time;
                 charge = hit->Charge;
+                PDGS = hit->HitSegTruePDG;
                 if(charge > MIN_CHARGE_CUT && t - min_time < MIN_TIME_CUT)
                 {
-                    hists3D[2*eventCount]->Fill(x,z,y,t - min_time);
-                    hists3D[2*eventCount+1]->Fill(x,z,y,charge);
+                    hists3D[3*eventCount]->Fill(x,z,y,t - min_time);
+                    hists3D[3*eventCount+1]->Fill(x,z,y,charge/2);
+                    for (int& pdg : PDGS)
+                    {
+                        dpdg = double (pdg) / (2 * double(PDGS.size()));
+                        // std::cout << dpdg << '\t';
+                        hists3D[3*eventCount+2]->Fill(x,z,y, dpdg);
+                    }
+                
                 }
             }
 
