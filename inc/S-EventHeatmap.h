@@ -77,7 +77,7 @@ public:
                     for (int& pdg : PDGS)
                     {
                         dpdg = double (pdg) / (2 * double(PDGS.size()));
-                        std::cout << dpdg << '\t';
+                        // std::cout << dpdg << '\t';
                         hists3D[3*eventCount+2]->Fill(x,z,y, dpdg);
                     }
                 
