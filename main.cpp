@@ -61,6 +61,7 @@ int main(int argc, char** argv)
     StrategyManager hitsStratMan, trueStratMan, fiberStratMan;
 
     // True strategy manager
+
     // trueStratMan.AddStrategy(std::unique_ptr<TrajRecognition>(new TrajRecognition));
     // const std::string name = "TrajRecognition", mode = "True";
 
@@ -73,16 +74,15 @@ int main(int argc, char** argv)
     
     // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
     // hitsStratMan.AddStrategy(std::unique_ptr<EventCharge>(new EventCharge));
-    // hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
+    hitsStratMan.AddStrategy(std::unique_ptr<CubesEdep>(new CubesEdep));
     // hitsStratMan.AddStrategy(std::unique_ptr<DrawFibers>(new DrawFibers));
     // hitsStratMan.AddStrategy(std::unique_ptr<EventEnergy>(new EventEnergy));
     // hitsStratMan.AddStrategy(std::unique_ptr<EventHeatmap>(new EventHeatmap));
-    hitsStratMan.AddStrategy(std::unique_ptr<TrajRecognition>(new TrajRecognition));
+    // hitsStratMan.AddStrategy(std::unique_ptr<TrajRecognition>(new TrajRecognition));
 
     // strats = hitsStratMan.GetStrategyNames();
 
     hitsStratMan.ProcessStrategies(hits_reader);
-
 
     // for (int i = 0; i < 1; i++)
     // {
