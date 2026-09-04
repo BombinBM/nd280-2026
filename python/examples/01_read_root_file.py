@@ -26,7 +26,7 @@ def get_pdg_from_argv(input: str) -> str:
     }
     return cases.get(input, "undefined particle")
 
-def main(path, particle_pdg = "-13"):
+def main(path, particle_pdg = "0"):
     print(get_pdg_from_argv(particle_pdg))
     ROOT.gROOT.ProcessLine(".L /home/bogdan/Desktop/VScode/nd280-2026/test3/SFGAnalysis/SFGAnalysis.so")
     
@@ -59,7 +59,7 @@ def main(path, particle_pdg = "-13"):
     zeros = 0
     null_events = 0
 
-    for i in tqdm.tqdm(range(tree.GetEntries())):
+    for i in tqdm.tqdm(range(min(1000, tree.GetEntries()))):
         tree.GetEntry(i)
         if read_arr.GetEntries() == 0 or not read_arr.At(0):
             # print("Problem with event\n")
@@ -158,5 +158,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python 01_read_root_file.py /path/to/file.root [particle_pdg]")
         sys.exit(1)
-    particle_pdg = sys.argv[2] if len(sys.argv) > 2 else "-13"
+    particle_pdg = sys.argv[2] if len(sys.argv) > 2 else "0"
     main(sys.argv[1], particle_pdg)

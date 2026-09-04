@@ -136,6 +136,22 @@ def plot_metrics_vs_estimators(pipeline, X_train, y_train, X_test, y_test, plot_
     plt.close()
 
 
+def plot_confusion_matrix(y_test, preds, plot_prefix):
+    """Plot and save confusion matrix."""
+    import seaborn as sns
+    
+    cm = confusion_matrix(y_test, preds)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='rocket', cbar=True)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title('Confusion Matrix')
+    plt.tight_layout()
+    plt.savefig(f"{plot_prefix}_confusion_matrix.png", dpi=100)
+    print(f"Saved confusion matrix plot to {plot_prefix}_confusion_matrix.png")
+    plt.close()
+
+
 # def plot_decision_boundary(pipeline, X, y, feature_names, plot_prefix):
     # """Plot 2D decision boundary using first two features."""
     # if X.shape[1] < 2:
@@ -193,7 +209,13 @@ def train_and_evaluate(X, y, n_estimators=100, test_size=0.2, random_state=42, o
 
     pipeline = Pipeline([
         ("scaler", StandardScaler()),
-        ("gb", GradientBoostingClassifier(n_estimators=n_estimators, random_state=random_state, verbose=0)),
+        ("gb", GradientBoostingClassifier(n_estimators=n_estimators, 
+                                          learning_rate=0.05,
+                                          max_depth=3,
+                                          min_samples_split=2,
+                                          max_leaf_nodes=None,
+                                          random_state=random_state, 
+                                          verbose=0)),
     ])
 
     # model = HistGradientBoostingClassifier(
@@ -218,6 +240,10 @@ def train_and_evaluate(X, y, n_estimators=100, test_size=0.2, random_state=42, o
         
     print("Confusion matrix:\n", confusion_matrix(y_test, preds))
     # print("Confusion matrix:\n", confusion_matrix(y_test, hist_preds))
+    
+    if plot_prefix:
+        plot_confusion_matrix(y_test, preds, plot_prefix)
+    
     if probs is not None and len(np.unique(y_test)) >= 2:
         if plot_prefix:
             from sklearn.metrics import roc_curve, auc
@@ -300,10 +326,10 @@ def main():
     parser = argparse.ArgumentParser(description="Train Gradient Boosting binary classifier (proton vs muon)")
     parser.add_argument("paths", nargs="+", help="CSV files or directories to read")
     parser.add_argument("--output", "-o", default="python/gb_model.joblib", help="Output model path")
-    parser.add_argument("--n-estimators", type=int, default=100)
-    parser.add_argument("--test-size", type=float, default=0.2)
-    parser.add_argument("--random-state", type=int, default=42)
-    parser.add_argument("--plot-prefix", default=None, help="Prefix for saved plots")
+    parser.add_argument("--n-estimators", "-n", type=int, default=100)
+    parser.add_argument("--test-size", "-t", type=float, default=0.2)
+    parser.add_argument("--random-state", "-r", type=int, default=42)
+    parser.add_argument("--plot-prefix", "-p", default=None, help="Prefix for saved plots")
 
     args = parser.parse_args()
 
