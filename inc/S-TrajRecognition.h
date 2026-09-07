@@ -33,6 +33,7 @@ private:
     TH1D* LifeTime = nullptr;
     TH1D* MuonProduction = nullptr;
     TH1D* ElectronProduction = nullptr;
+    TH1D* MuonEnergy = nullptr;
 
     std::string mode = "Recon";
 public:
@@ -42,10 +43,12 @@ public:
         LifeTime = new TH1D("Lifetime", "Initial particle lifetime", 50, 0, 100);
         MuonProduction = new TH1D("Muontime", "Muon production time", 50, 0, 100);
         ElectronProduction = new TH1D("Electrontime", "Electron production time", 600, 0, 3000);
+        MuonEnergy = new TH1D("MuonEnergy", "Muon Energy", 100, 4, 5);
         hists.push_back(PDGS);
         hists.push_back(LifeTime);
         hists.push_back(MuonProduction);
         hists.push_back(ElectronProduction);
+        hists.push_back(MuonEnergy);
     }
 
     ~TrajRecognition() = default;
@@ -164,16 +167,17 @@ public:
                         {
                             min_muon_time = std::min(min_muon_time, point.PositionT);
                             max_muon_time = std::max(max_muon_time, point.PositionT);
+                            MuonEnergy->Fill(Trajectory->InitMomentum.Energy() - 105.658); // Subtracting the muon rest mass in MeV/c^2
                         }
                     }
-                    std::cout << min_muon_time << '\t' << max_muon_time <<'\t';
+                    // std::cout << min_muon_time << '\t' << max_muon_time <<'\t';
                     if (min_pion_time != 1e6)
                     {
                         LifeTime->Fill(max_pion_time - min_pion_time);
                     }
                     if (min_muon_time != 1e6)
                     {
-                        std::cout << min_muon_time - min_pion_time << '\n';
+                        // std::cout << min_muon_time - min_pion_time << '\n';
                         MuonProduction->Fill(min_muon_time - min_pion_time);
                     }
                     

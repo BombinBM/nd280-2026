@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
 # files = ["antimuon_data.csv", "proton_data.csv", "pion-_data.csv", "pion+_data.csv", "electron_data.csv", "muon_data.csv", "kaon-_data.csv", "kaon+_data.csv"]
-files = ["antimuon_data.csv", "proton_data.csv"]
+files = ["antimuon_data.csv", "proton_data.csv", "pion+_data.csv"]
+# files = ["antimuon_data.csv", "proton_data.csv"]
+# files = ["antimuon_data.csv", "pion+_data.csv"]
+# files = ["pion+_data.csv"]
 # files = ["test_data.csv"]
 # Read CSV
 df = pd.concat([pd.read_csv(file) for file in files if os.path.exists(file)], ignore_index=True)
