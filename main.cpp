@@ -69,7 +69,6 @@ int main(int argc, char** argv)
 
     // trueStratMan.ProcessStrategies(true_reader);
 
-
     // Hits Strategy manager
     
     // hitsStratMan.AddStrategy(std::unique_ptr<DrawEntries>(new DrawEntries));
