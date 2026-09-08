@@ -4,5 +4,6 @@ matplotlib
 seaborn
 uproot
 scikit-learn
+catboost
 tqdm
 joblib

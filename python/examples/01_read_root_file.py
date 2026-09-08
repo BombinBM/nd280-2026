@@ -59,7 +59,7 @@ def main(path, particle_pdg = "0"):
     zeros = 0
     null_events = 0
 
-    for i in tqdm.tqdm(range(min(1000, tree.GetEntries()))):
+    for i in tqdm.tqdm(range(min(100000, tree.GetEntries()))):
         tree.GetEntry(i)
         if read_arr.GetEntries() == 0 or not read_arr.At(0):
             # print("Problem with event\n")

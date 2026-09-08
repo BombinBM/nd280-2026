@@ -43,6 +43,7 @@ output/
 plots/
 results/
 
+
 # Системные файлы
 *~
 .*.swp
@@ -103,6 +104,9 @@ obj*/
 *.log
 logs/
 *.joblib
+*.tsv
+*.json
+*.tfevents
 
 # Данные (осторожно с этим!)
 # Раскомментируйте, если НЕ хотите хранить данные в репозитории
@@ -130,6 +134,7 @@ logs/
 *.geometry
 
 # venv файлы
+.venv/
 venv/
 lib64
 ttx.1

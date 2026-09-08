@@ -5,6 +5,8 @@ import glob
 import pandas as pd
 import numpy as np
 
+from catboost import CatBoostClassifier
+
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import (
@@ -73,25 +75,66 @@ def prepare_dataset(df):
 
 
 def plot_metrics_vs_estimators(pipeline, X_train, y_train, X_test, y_test, plot_prefix):
-    """Plot metrics vs number of estimators."""
-    gb = pipeline.named_steps["gb"]
-    scaler = pipeline.named_steps["scaler"]
-    X_train_scaled = scaler.transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    """Plot metrics vs number of estimators for sklearn or CatBoost models.
+
+    `pipeline` may be a `Pipeline` (with a scaler + estimator) or a fitted estimator
+    such as `GradientBoostingClassifier` or `CatBoostClassifier`.
+    """
+    # detect pipeline vs raw model
+    scaler = None
+    model = pipeline
+    if isinstance(pipeline, Pipeline):
+        scaler = pipeline.named_steps.get("scaler", None)
+        model = pipeline.named_steps.get("gb", None) or pipeline.named_steps.get("cat", None) or model
+
+    # prepare features (scale if scaler provided)
+    X_train_in = scaler.transform(X_train) if scaler else X_train
+    X_test_in = scaler.transform(X_test) if scaler else X_test
+
     train_accuracies = []
     test_accuracies = []
     test_precisions = []
     test_recalls = []
     test_f1s = []
 
-    for preds_train in gb.staged_predict(X_train_scaled):
-        train_accuracies.append(accuracy_score(y_train, preds_train))
+    # sklearn staged predictions
+    if hasattr(model, "staged_predict"):
+        for preds_train in model.staged_predict(X_train_in):
+            train_accuracies.append(accuracy_score(y_train, preds_train))
 
-    for preds_test in gb.staged_predict(X_test_scaled):
-        test_accuracies.append(accuracy_score(y_test, preds_test))
-        test_precisions.append(precision_score(y_test, preds_test, zero_division=0, average="macro"))
-        test_recalls.append(recall_score(y_test, preds_test, zero_division=0, average="macro"))
-        test_f1s.append(f1_score(y_test, preds_test, zero_division=0, average="macro"))
+        for preds_test in model.staged_predict(X_test_in):
+            test_accuracies.append(accuracy_score(y_test, preds_test))
+            test_precisions.append(precision_score(y_test, preds_test, zero_division=0, average="macro"))
+            test_recalls.append(recall_score(y_test, preds_test, zero_division=0, average="macro"))
+            test_f1s.append(f1_score(y_test, preds_test, zero_division=0, average="macro"))
+    else:
+        # assume CatBoost-like: loop over iterations using ntree_end
+        # try to determine number of iterations
+        n_iter = None
+        try:
+            n_iter = int(getattr(model, "get_params", lambda: {})().get("iterations", 0) or getattr(model, "n_estimators", None) or getattr(model, "tree_count_", None) or 0)
+        except Exception:
+            n_iter = 0
+
+        if n_iter <= 0:
+            # fallback: try train_score_ length or 1
+            n_iter = len(getattr(model, "train_score_", [])) or 1
+
+        for i in range(1, n_iter + 1):
+            # CatBoost predict supports ntree_end
+            try:
+                preds_train = model.predict(X_train_in, ntree_end=i)
+                preds_test = model.predict(X_test_in, ntree_end=i)
+            except TypeError:
+                # some models don't accept ntree_end; fall back to full predict
+                preds_train = model.predict(X_train_in)
+                preds_test = model.predict(X_test_in)
+
+            train_accuracies.append(accuracy_score(y_train, preds_train))
+            test_accuracies.append(accuracy_score(y_test, preds_test))
+            test_precisions.append(precision_score(y_test, preds_test, zero_division=0, average="macro"))
+            test_recalls.append(recall_score(y_test, preds_test, zero_division=0, average="macro"))
+            test_f1s.append(f1_score(y_test, preds_test, zero_division=0, average="macro"))
 
     n_estimators_range = range(1, len(test_accuracies) + 1)
 
@@ -133,6 +176,69 @@ def plot_metrics_vs_estimators(pipeline, X_train, y_train, X_test, y_test, plot_
     plt.tight_layout()
     plt.savefig(f"{plot_prefix}_metrics_vs_estimators.png", dpi=100)
     print(f"Saved metrics plot to {plot_prefix}_metrics_vs_estimators.png")
+    plt.close()
+
+
+def plot_loss_vs_estimators(pipeline, X_train, y_train, X_test, y_test, plot_prefix):
+    """Plot training and test loss vs number of estimators."""
+    # detect pipeline vs raw model
+    scaler = None
+    model = pipeline
+    if isinstance(pipeline, Pipeline):
+        scaler = pipeline.named_steps.get("scaler", None)
+        model = pipeline.named_steps.get("gb", None) or pipeline.named_steps.get("cat", None) or model
+
+    X_train_in = scaler.transform(X_train) if scaler else X_train
+    X_test_in = scaler.transform(X_test) if scaler else X_test
+
+    from sklearn.metrics import log_loss
+
+    train_loss = []
+    test_loss = []
+
+    # sklearn staged_predict_proba
+    if hasattr(model, "staged_predict_proba"):
+        for probs_train in model.staged_predict_proba(X_train_in):
+            train_loss.append(log_loss(y_train, probs_train, labels=np.unique(y_train)))
+
+        for probs_test in model.staged_predict_proba(X_test_in):
+            test_loss.append(log_loss(y_test, probs_test, labels=np.unique(y_train)))
+    else:
+        # CatBoost-like: iterate ntree_end
+        n_iter = None
+        try:
+            n_iter = int(getattr(model, "get_params", lambda: {})().get("iterations", 0) or getattr(model, "n_estimators", None) or getattr(model, "tree_count_", None) or 0)
+        except Exception:
+            n_iter = 0
+
+        if n_iter <= 0:
+            n_iter = len(getattr(model, "evals_result_", {})) or len(getattr(model, "train_score_", [])) or 1
+
+        for i in range(1, n_iter + 1):
+            try:
+                probs_train = model.predict_proba(X_train_in, ntree_end=i)
+                probs_test = model.predict_proba(X_test_in, ntree_end=i)
+            except TypeError:
+                # fallback to full predict_proba
+                probs_train = model.predict_proba(X_train_in)
+                probs_test = model.predict_proba(X_test_in)
+
+            train_loss.append(log_loss(y_train, probs_train, labels=np.unique(y_train)))
+            test_loss.append(log_loss(y_test, probs_test, labels=np.unique(y_train)))
+
+    n_estimators_range = range(1, len(train_loss) + 1)
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(n_estimators_range, train_loss, label="Train loss", marker='o', markersize=3)
+    plt.plot(n_estimators_range, test_loss, label="Test loss", marker='s', markersize=3)
+    plt.xlabel("Number of Estimators")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Number of Estimators")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(f"{plot_prefix}_loss_vs_estimators.png", dpi=100)
+    print(f"Saved loss plot to {plot_prefix}_loss_vs_estimators.png")
     plt.close()
 
 
@@ -213,28 +319,44 @@ def train_and_evaluate(X, y, n_estimators=100, test_size=0.2, random_state=42, o
                                           learning_rate=0.05,
                                           max_depth=3,
                                           min_samples_split=2,
-                                          max_leaf_nodes=None,
+                                          max_leaf_nodes=5,
                                           random_state=random_state, 
                                           verbose=0)),
     ])
 
-    # model = HistGradientBoostingClassifier(
-    #     max_iter=max_iter,
-    #     max_bins=255,
-    #     early_stopping=True,
-    #     random_state=random_state
-    # )
+    param_grid = {
+    'depth': [1, 2, 3, 4],
+    'min_data_in_leaf': [1, 2, 5, 10],
+    'learning_rate': [0.08, 0.1, 0.15, 0.2],
+    'l2_leaf_reg': [1, 3, 5, 10],
+    }
+
+    
+
+    cat = CatBoostClassifier(
+        iterations=1500,
+        learning_rate=0.03,
+        depth=5,                         # Неглубокие деревья для малого числа фичей
+        loss_function='MultiClass',       # Основная функция потерь для многоклассовой задачи
+        eval_metric='Accuracy',          # Контрольная метрика
+        random_seed=42,
+        early_stopping_rounds=50,        # Остановка, если точность перестала расти
+        verbose=100                       # Вывод прогресса каждые 100 итераций
+    )
 
     print("Training model...")
-    # model.fit(X_train, y_train)
-    pipeline.fit(X_train, y_train)
+    # pipeline.fit(X_train, y_train)
     
+    grid_search_result = cat.grid_search(param_grid, X=X_train, y=y_train, cv=3, verbose=100)
 
-    preds = pipeline.predict(X_test)
-    probs = pipeline.predict_proba(X_test) if hasattr(pipeline, "predict_proba") else None
+    print("Best parameters found:", grid_search_result['params'])
 
-    # hist_preds = model.predict(X_test)
+    # preds = pipeline.predict(X_test)
+    # probs = pipeline.predict_proba(X_test) if hasattr(pipeline, "predict_proba") else None
     
+    preds = cat.predict(X_test)
+    probs = cat.predict_proba(X_test) if hasattr(cat, "predict_proba") else None
+
     print("\nClassification report:\n", classification_report(y_test, preds, digits=4))
     # print("\nClassification report:\n", classification_report(y_test, hist_preds, digits=4))
         
@@ -314,9 +436,11 @@ def train_and_evaluate(X, y, n_estimators=100, test_size=0.2, random_state=42, o
     # Additional visualizations
     if plot_prefix:
         print("\nGenerating additional plots...")
-        plot_metrics_vs_estimators(pipeline, X_train, y_train, X_test, y_test, plot_prefix)
+        # plot_loss_vs_estimators(pipeline, X_train, y_train, X_test, y_test, plot_prefix)
+        # plot_metrics_vs_estimators(pipeline, X_train, y_train, X_test, y_test, plot_prefix)
         # plot_decision_boundary(pipeline, X_train, y_train, list(X.columns), plot_prefix)
-
+        plot_loss_vs_estimators(cat, X_train, y_train, X_test, y_test, plot_prefix)
+        plot_metrics_vs_estimators(cat, X_train, y_train, X_test, y_test, plot_prefix)
     if out_model:
         joblib.dump({"model": pipeline, "features": list(X.columns)}, out_model)
         print(f"Saved model to {out_model}")
